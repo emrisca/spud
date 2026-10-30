@@ -1,0 +1,51 @@
+[package]
+name = "spud"
+version = "0.1.0"
+description = "An eight-in, eight-bus mixing console with its own WASAPI engine"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "spud_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# The tray icon keeps the engine alive once the window is closed: hiding the
+# window is not quitting, so the audio thread and its streams carry on.
+tauri = { version = "2", features = ["tray-icon"] }
+# One process per machine: a second launch focuses the console that is already
+# running instead of starting a rival engine on the same cables.
+tauri-plugin-single-instance = "2"
+# Only for the "choose another copy" button on the sign-in row, and only from
+# Rust: the user picks an executable instead of typing its path.
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# The mixer's own audio path. cpal wraps WASAPI (and CoreAudio/ALSA), so the
+# standalone engine captures hardware inputs, the virtual cable's capture side,
+# and renders to any output — with no third-party mixer involved.
+cpal = "0.15"
+
+# WASAPI: enumerating the audio sessions playing into each virtual cable, and
+# setting their volume. This is the same source Windows' own volume mixer uses.
+windows = { version = "0.58", features = [
+  "Win32_Foundation",
+  "Win32_Media_Audio",
+  "Win32_System_Com",
+  "Win32_System_Com_StructuredStorage",
+  "Win32_System_Threading",
+  "Win32_UI_Shell",
+  "Win32_UI_Shell_PropertiesSystem",
+  "Win32_Devices_FunctionDiscovery",
+  "Win32_System_Registry",
+] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

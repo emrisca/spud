@@ -1,0 +1,1407 @@
+/* Spud's console chrome.
+
+   Everything here reads the Interior material tokens (--bezel/--panel/--well,
+   --ink, --hairline, --accent, --moss, --flag) and Tailwind's stone ladder, so
+   the UI-Colors palette repaints the entire console without a second theme. */
+
+.sp {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  overflow: hidden;
+  background: var(--bezel);
+}
+
+/* ── top bar ─────────────────────────────────────────────────────── */
+
+.sp__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px 0 10px;
+  height: 52px;
+  flex: none;
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow-lift);
+}
+
+.sp__brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+
+.sp__mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 8px;
+  color: var(--panel);
+  background: linear-gradient(140deg, var(--accent), color-mix(in oklab, var(--accent) 45%, var(--ink)));
+  box-shadow: var(--shadow-cap);
+}
+
+.sp__titles { min-width: 0; }
+
+.sp__name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.sp__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.sp__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ink-3);
+}
+
+.sp__pill--live { color: var(--ink); }
+.sp__pill--live .sp__dot {
+  background: var(--moss);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--moss) 24%, transparent);
+}
+
+.sp__pill--preview { color: var(--ink); }
+.sp__pill--preview .sp__dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+.sp__pill--missing .sp__dot { background: var(--flag); }
+
+/* The one thing in the header that is a button: a device Windows refused looks
+   like every other assignment on the console, so the count sits beside the
+   stream count and leads to the list of reasons in Settings. */
+.sp__pill--failed {
+  border: 0;
+  cursor: pointer;
+  color: var(--flag);
+  background: color-mix(in oklab, var(--flag) 12%, var(--well));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--flag) 45%, transparent);
+}
+
+.sp__pill--failed:hover { background: color-mix(in oklab, var(--flag) 18%, var(--well)); }
+.sp__pill--failed:focus-visible { outline: 2px solid var(--flag); outline-offset: 1px; }
+
+.sp__spacer { flex: 1; }
+
+.sp__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.sp__icon:hover { background: var(--sub); color: var(--ink); }
+.sp__icon:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ── body ────────────────────────────────────────────────────────── */
+
+/* The console needs about 1210 px to hold eight strips and eight buses side by
+   side. Below that it used to be clipped by .sp's overflow: the last four bus
+   columns, which every route points at, could not be reached at the window's own
+   minimum width. It scrolls instead, and nothing is cut off. */
+.sp__body { flex: 1; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden; }
+
+.console {
+  display: flex;
+  flex: 1;
+  gap: 10px;
+  min-height: 0;
+  /* min-content, not max-content: the floor is the strips' own minimum widths
+     (76 px hardware, 120 px virtual) plus the bus panel, so the console is as
+     narrow as it can be and still holds all eight buses. max-content would size
+     every 1fr track to its longest label and overflow the window. */
+  min-width: min-content;
+}
+
+.console__inputs {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Five hardware inputs, then three virtual ones. The heads row shares the same
+   template so the labels sit over their own group. */
+.console__heads,
+.console__strips {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(76px, 1fr)) repeat(3, minmax(120px, 1.3fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.console__strips {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Group names, not decoration: sentence case at a size that reads. They used to
+   be 9.5 px tracked capitals, which is smaller than any label they sit above. */
+.section-head {
+  padding-left: 2px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-2);
+}
+
+.section-head--virtual { color: color-mix(in oklab, var(--moss) 62%, var(--ink-2)); }
+
+/* The buses carry the same label row as the inputs, so the three groups share one
+   top edge; the panel below it is inset to match the strips' own padding. */
+.console__buses {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Flex, not block: a block box would take its height from the inherited 16 px
+   strut and push the bus panel ~8 px below the strips' top edge. The legend
+   rides at the far right of the same row. */
+.console__bus-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.section-note {
+  color: var(--ink-3);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.console__bus-panel {
+  display: grid;
+  grid-template-columns: repeat(8, 44px);
+  gap: 5px;
+  flex: 1;
+  min-height: 0;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow-lift);
+}
+
+/* ── strips ──────────────────────────────────────────────────────── */
+
+.strip {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 7px 7px;
+  border-radius: 13px;
+  background: var(--panel);
+  box-shadow: var(--shadow-lift);
+  transition: box-shadow 0.16s ease;
+}
+
+.strip:focus-within { box-shadow: 0 0 0 1.5px var(--accent), var(--shadow-lift); }
+.strip--muted .strip__body,
+.strip--muted .strip__readout { opacity: 0.55; }
+
+.strip__head { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+.strip__label {
+  width: 100%;
+  padding: 1px 2px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text;
+}
+
+.strip__label:hover { background: var(--sub); }
+
+.strip__label-input {
+  width: 100%;
+  padding: 1px 3px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.strip__device {
+  padding: 0 2px;
+  font-size: 9px;
+  line-height: 1.3;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.strip__body {
+  display: flex;
+  flex: 1;
+  min-height: 96px;
+  gap: 7px;
+  padding: 4px 0;
+  align-items: stretch;
+}
+
+.strip__readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.strip__db {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.strip__unit { font-size: 9px; color: var(--ink-3); }
+
+.strip__buttons { display: flex; gap: 3px; }
+
+.strip__routes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+}
+
+.strip__fx { display: flex; gap: 3px; }
+
+/* small square toggles: mute, solo, mono, bus mute… */
+.mini {
+  flex: 1;
+  height: 22px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.mini:hover { color: var(--ink); }
+
+.mini[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--accent) 16%, var(--well));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 55%, transparent);
+  color: var(--accent);
+}
+
+/* The ceiling is on by default and is protection rather than a mode, so its lit
+   state is the quiet one: moss, the same green the meters use, and no border
+   shouting at a console where nothing is wrong. */
+.mini--limit {
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.mini--limit[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--moss) 14%, var(--well));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--moss) 42%, transparent);
+  color: var(--moss);
+}
+
+.mini--mute[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--flag) 16%, var(--well));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--flag) 55%, transparent);
+  color: var(--flag);
+}
+
+.mini--solo[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--moss) 18%, var(--well));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--moss) 55%, transparent);
+  color: var(--moss);
+}
+
+.route {
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+  color: var(--ink-3);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.route:hover { color: var(--ink); }
+
+/* A cable routed back into itself would loop through Windows. Struck rather
+   than faded: a faded chip reads as broken, a struck one reads as impossible,
+   and the letter stays legible so the bus is still named. */
+.route:disabled,
+.route:disabled:hover {
+  position: relative;
+  color: var(--ink-3);
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  cursor: not-allowed;
+}
+
+.route:disabled::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  right: 2px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.75;
+  transform: translateY(-50%) rotate(-18deg);
+}
+
+.route[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--panel);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 70%, black);
+}
+
+.route--virtual[aria-pressed="true"] {
+  background: var(--moss);
+  color: var(--panel);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--moss) 70%, black);
+}
+
+.chip {
+  flex: 1;
+  height: 20px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 9.5px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.chip:hover { color: var(--ink); }
+
+.chip[data-on] {
+  background: color-mix(in oklab, var(--accent) 14%, var(--well));
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent);
+}
+
+/* ── buses ───────────────────────────────────────────────────────── */
+
+.bus {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 5px;
+  align-items: stretch;
+}
+
+.bus__key {
+  align-self: center;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+  color: var(--ink);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.bus__key--virtual {
+  background: color-mix(in oklab, var(--moss) 15%, var(--well));
+  color: var(--moss);
+}
+
+.bus__body {
+  display: flex;
+  flex: 1;
+  min-height: 90px;
+  gap: 5px;
+  padding: 3px 0;
+  align-items: stretch;
+}
+
+.bus__db {
+  text-align: center;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.bus__device {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  width: 100%;
+  height: 46px;
+  padding: 3px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 8.5px;
+  line-height: 1.25;
+  /* A single long word ("Headphones") has to break somewhere in 44 px. */
+  overflow-wrap: anywhere;
+  text-align: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+button.bus__device:hover { color: var(--ink); }
+
+.bus__device--virtual {
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+  cursor: default;
+  font-style: italic;
+}
+
+.bus__buttons { display: flex; flex-direction: column; gap: 3px; }
+.bus__buttons .mini { height: 19px; font-size: 9px; flex: none; }
+
+/* ── fader ───────────────────────────────────────────────────────── */
+
+.fader {
+  position: relative;
+  flex: 1;
+  min-width: 26px;
+  min-height: 60px;
+  touch-action: none;
+  cursor: ns-resize;
+  border-radius: 8px;
+  outline-offset: 2px;
+}
+
+.fader:focus-visible { outline: 2px solid var(--accent); }
+
+.fader__slot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 5px;
+  transform: translateX(-50%);
+  border-radius: 3px;
+  background: var(--well);
+  box-shadow: var(--shadow-well);
+}
+
+.fader__fill {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 5px;
+  transform: translateX(-50%);
+  border-radius: 3px;
+  background: linear-gradient(to top, color-mix(in oklab, var(--accent) 55%, transparent), var(--accent));
+  pointer-events: none;
+}
+
+.fader__tick {
+  position: absolute;
+  right: 1px;
+  width: 5px;
+  height: 1px;
+  background: var(--hairline-strong);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.fader__thumb {
+  position: absolute;
+  left: 50%;
+  width: 28px;
+  height: 11px;
+  transform: translate(-50%, 50%);
+  border-radius: 3px;
+  background: linear-gradient(var(--panel), color-mix(in oklab, var(--panel) 82%, var(--ink)));
+  box-shadow: var(--shadow-cap), inset 0 0 0 1px var(--hairline-strong);
+  pointer-events: none;
+}
+
+.fader__thumb span {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+/* ── meter ───────────────────────────────────────────────────────── */
+
+.meter {
+  position: relative;
+  width: 11px;
+  flex: none;
+  border-radius: 3px;
+  background: var(--well);
+  box-shadow: var(--shadow-well);
+  overflow: hidden;
+}
+
+.meter__column {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    var(--moss) 0%,
+    var(--moss) 52%,
+    color-mix(in oklab, var(--moss) 45%, var(--flag)) 76%,
+    color-mix(in oklab, var(--flag) 80%, white) 90%,
+    var(--flag) 100%
+  );
+}
+
+.meter__mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--panel);
+}
+
+.meter--bus { width: 10px; }
+.meter--bus .meter__mask { background: var(--panel); }
+
+.meter__clip {
+  position: absolute;
+  top: 2px;
+  left: 1px;
+  right: 1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--flag);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.meter__clip[data-on] { opacity: 1; }
+
+/* ── processing panel ────────────────────────────────────────────── */
+
+.fx {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.fx__group {
+  padding: 10px 11px;
+  border-radius: 11px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+}
+
+.fx__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.fx__head h3 {
+  margin: 0;
+  flex: 1;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.fx__head .chip { flex: none; min-width: 34px; height: 19px; }
+
+.fx__amount {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  color: var(--ink-3);
+}
+
+.fx__footer { display: flex; align-items: center; gap: 10px; width: 100%; }
+
+.fx__hint { font-size: 10.5px; color: var(--ink-3); }
+
+.param { display: block; margin-top: 7px; }
+
+.param__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.param__label { font-size: 10.5px; color: var(--ink-2); }
+
+.param__value {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.param__range {
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  cursor: pointer;
+}
+
+.param__range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--accent) 22%, var(--well));
+  box-shadow: var(--shadow-well);
+}
+
+.param__range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  margin-top: -4.5px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--shadow-cap), inset 0 0 0 1px var(--hairline-strong);
+}
+
+.param__range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--accent) 22%, var(--well));
+}
+
+.param__range::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--shadow-cap), inset 0 0 0 1px var(--hairline-strong);
+}
+
+/* ── dialogs & empty states ──────────────────────────────────────── */
+
+.sp__stack { display: flex; flex-direction: column; gap: 8px; }
+
+.sp__row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+  color: var(--ink-2);
+  font: inherit;
+  text-align: left;
+}
+
+.sp__row--button { cursor: pointer; }
+.sp__row--button:hover { background: var(--sub); }
+
+/* A settings row that is a switch: label and note on the left, control right. */
+.sp__row--switch {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sp__row--switch:hover { background: var(--sub); }
+
+.sp__row-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sp__switch {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 19px;
+  border-radius: 999px;
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+  transition: background-color 0.15s ease;
+}
+
+.sp__switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: var(--ink-3);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.sp__switch[data-on="true"] {
+  background: color-mix(in oklab, var(--accent) 40%, var(--well));
+}
+
+.sp__switch[data-on="true"]::after {
+  background: var(--accent);
+  transform: translateX(15px);
+}
+
+.sp__row-name { font-size: 12.5px; font-weight: 550; color: var(--ink); }
+.sp__row-note { font-size: 11px; line-height: 1.45; color: var(--ink-3); }
+
+.sp__path {
+  margin-top: 3px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  color: var(--ink-3);
+  word-break: break-all;
+}
+
+/* The sign-in row's two buttons: text links, because a settings row is a
+   sentence with an action at the end rather than a toolbar. */
+.sp__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sp__link--button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.sp__fineprint {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink-3);
+}
+
+.sp__group-name {
+  margin: 6px 0 4px;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.sp__device {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sp__device:hover { background: var(--sub); color: var(--ink); }
+.sp__device[aria-current="true"] { background: var(--well); color: var(--ink); }
+
+.sp__device-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sp__device-hw {
+  max-width: 42%;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 8.5px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+.sp__empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow-lift);
+  text-align: center;
+}
+
+.sp__empty-title { margin: 0; font-size: 15px; font-weight: 600; color: var(--ink); }
+
+.sp__empty-note {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+.sp__button {
+  margin-top: 4px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--panel);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.sp__footer-row { display: flex; align-items: center; gap: 10px; width: 100%; }
+
+/* ── status bar ──────────────────────────────────────────────────── */
+
+.sp__foot {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  padding: 0 4px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+  height: 16px;
+}
+
+.sp__foot-sep { opacity: 0.5; }
+.sp__foot-item--busy { color: var(--accent); }
+
+/* virtual input card */
+
+.strip--virtual {
+  gap: 5px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--moss) 5%, var(--panel)),
+    var(--panel) 42%
+  );
+  box-shadow: var(--shadow-lift), inset 0 0 0 1px color-mix(in oklab, var(--moss) 18%, transparent);
+}
+
+.strip__rate {
+  padding: 0 2px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: -0.01em;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.strip__caption {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 2px 4px;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.strip__eq,
+.strip__position {
+  padding: 5px 4px 4px;
+  border-radius: 8px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+}
+
+.strip__knobs {
+  display: flex;
+  justify-content: space-around;
+  gap: 2px;
+}
+
+.chip--tiny {
+  flex: none;
+  min-width: 26px;
+  height: 16px;
+  padding: 0 3px;
+  font-size: 8.5px;
+  margin-left: auto;
+}
+
+.strip__matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.matrix-key {
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: var(--panel);
+  box-shadow: var(--shadow-row);
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.matrix-key:hover { color: var(--ink); }
+
+.matrix-key[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--moss) 22%, var(--panel));
+  color: var(--moss);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--moss) 50%, transparent);
+}
+
+/* knob */
+
+.knob-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+.knob__label {
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+
+.knob {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 32%, var(--panel), var(--sub));
+  box-shadow:
+    var(--shadow-cap),
+    inset 0 0 0 1px var(--hairline-strong),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.18);
+  cursor: ns-resize;
+  touch-action: none;
+  outline-offset: 2px;
+}
+
+.knob:focus-visible { outline: 2px solid var(--accent); }
+
+.knob__cap { position: absolute; inset: 0; }
+
+.knob__pointer {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 2px;
+  height: 10px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--accent);
+  transform-origin: 50% 100%;
+}
+
+.knob__value {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+/* Eight strips do not reflow into two rows: the second row had no height and its
+   routing buttons and faders were clipped. Below the comfortable width the
+   console keeps one row and scrolls sideways instead. */
+@media (max-width: 1180px) {
+  .console { min-width: 1180px; }
+  .sp__body { overflow: auto; }
+}
+
+/* programs playing into a virtual input */
+
+/* min-height: 0 lets the panel give back the few pixels a short window has no
+   room for, instead of pushing the EQ / DYN row past the bottom of the body
+   where it was cut with no way to reach it. A long list scrolls here rather
+   than lengthening the strip. */
+.strip__apps {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 5px 5px;
+  border-radius: 8px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+}
+
+.strip__apps-count {
+  margin-left: auto;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 8.5px;
+  color: var(--ink-3);
+}
+
+.app-row {
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr) 17px;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 0 2px;
+}
+
+.app-row__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ink-3);
+  opacity: 0.35;
+}
+
+.app-row[data-playing] .app-row__dot {
+  background: var(--moss);
+  opacity: 1;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--moss) 22%, transparent);
+}
+
+.app-row__name {
+  min-width: 0;
+  font-size: 9.5px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-row[data-muted] .app-row__name {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.app-row__mute {
+  width: 17px;
+  height: 15px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: var(--panel);
+  box-shadow: var(--shadow-row);
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 8px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.app-row__mute[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--flag) 18%, var(--panel));
+  color: var(--flag);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--flag) 45%, transparent);
+}
+
+.app-row__vol {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 10px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  cursor: pointer;
+}
+
+.app-row__vol::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--accent) 26%, var(--well));
+}
+
+.app-row__vol::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -3px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--shadow-cap), inset 0 0 0 1px var(--hairline-strong);
+}
+
+.app-row__vol::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--accent) 26%, var(--well));
+}
+
+.app-row__vol::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--shadow-cap), inset 0 0 0 1px var(--hairline-strong);
+}
+
+/* The device line under a strip name is a picker, not a caption. */
+button.strip__device {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 8.5px;
+  line-height: 1.3;
+  color: var(--ink-3);
+  text-align: center;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.strip__device:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* The bus column's last button slot explains what the bus is, now that every
+   bus is a real output and there is no virtual placeholder. */
+.bus__note {
+  display: grid;
+  place-items: center;
+  height: 22px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.sp__link {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sp__errors {
+  margin: 4px 0 0;
+  padding-left: 14px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+/* ── mic equaliser ───────────────────────────────────────────────── */
+
+.eq-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.eq-chips .chip {
+  flex: 0 0 auto;
+  min-width: 46px;
+  height: 24px;
+  padding: 0 9px;
+  font-size: 10.5px;
+}
+
+.eq-bands {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 9px 12px 2px;
+  border-radius: 10px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+}
+
+.eq-bands .param { margin-top: 5px; }
+.eq-bands .param:first-of-type { margin-top: 1px; }
+.eq-bands .param__range { height: 14px; }
+
+.eq-hz {
+  margin-left: 6px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: -0.01em;
+  color: var(--ink-3);
+}
+
+.eq-presets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eq-presets .sp__row-note { margin-right: 2px; }
+
+.eq-presets .chip {
+  flex: 0 0 auto;
+  height: 23px;
+  padding: 0 12px;
+  font-size: 10px;
+}
+
+.eq-hint {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* A control that is present but not doing anything while the EQ is off. */
+.eq-bands[data-dim],
+.sp__row[data-dim] { opacity: 0.45; }
+
+/* ── gate & compressor ───────────────────────────────────────────── */
+
+/* Two columns: eleven controls in one column would run off the bottom of the
+   window, and each pair reads as a group anyway — what it hears, how fast it
+   moves. */
+.dyn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 16px;
+  padding: 7px 12px 4px;
+  border-radius: 10px;
+  background: var(--well);
+  box-shadow: var(--shadow-row);
+}
+
+.dyn-grid .param { margin-top: 5px; }
+.dyn-grid .param__range { height: 14px; }
+
+/* The note under a control name is where the setting explains itself; at this
+   width it has to wrap rather than push the value out of the row. */
+.dyn-grid .param__label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dyn-grid .eq-hz { margin-left: 0; }
+
+/* Same rule as the equaliser's: present, but not doing anything. */
+.dyn-grid[data-dim] { opacity: 0.45; }
+
+.sp__pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+}
+
+.sp__pairs li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sp__pairs-cable { color: var(--moss); }
+.sp__pairs-arrow { opacity: 0.5; }

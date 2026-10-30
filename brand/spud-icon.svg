@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Spud">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0.643" y2="0.766" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#195280"/>
+      <stop offset="1" stop-color="#0b2338"/>
+    </linearGradient>
+  </defs>
+  <rect x="44" y="44" width="936" height="936" rx="272" fill="url(#tile)"/>
+  <g fill="#f4f6f7">
+    <rect x="175.63" y="190.25" width="87.75" height="643.5" rx="43.88"/>
+    <rect x="468.13" y="190.25" width="87.75" height="643.5" rx="43.88"/>
+    <rect x="760.63" y="190.25" width="87.75" height="643.5" rx="43.88"/>
+    <rect x="140.52" y="316.02" width="157.95" height="157.95" rx="78.98"/>
+    <rect x="433.03" y="550.03" width="157.95" height="157.95" rx="78.98"/>
+    <rect x="725.53" y="228.27" width="157.95" height="157.95" rx="78.98"/>
+  </g>
+</svg>

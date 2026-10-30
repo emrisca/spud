@@ -1,0 +1,13 @@
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+.DS_Store
+*.log
+
+# Third-party virtual-cable installers live here for convenience only. They are
+# signed drivers with per-PC licences and no redistribution right, so they are
+# never committed and never bundled into a build (see drivers/README.md).
+drivers/*
+!drivers/README.md
+src-tauri/drivers/
