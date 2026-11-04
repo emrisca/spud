@@ -11,3 +11,7 @@ src-tauri/gen/
 drivers/*
 !drivers/README.md
 src-tauri/drivers/
+
+# The updater signing key. The public half is in tauri.conf.json; the private
+# half is a password-manager secret and never a commit.
+.secrets/

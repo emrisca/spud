@@ -1405,3 +1405,84 @@ button.strip__device:hover {
 
 .sp__pairs-cable { color: var(--moss); }
 .sp__pairs-arrow { opacity: 0.5; }
+
+/* ── update banner ───────────────────────────────────────────────── */
+
+/* One row under the header, only while the release endpoint offers a newer
+   build. Nothing installs until the button is pressed. */
+.sp__update {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: var(--shadow-lift), inset 0 0 0 1px color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+.sp__update-mark {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.sp__update-text { min-width: 0; flex: 1; }
+
+.sp__update-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.sp__update-note {
+  margin: 2px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.sp__update-state {
+  flex: none;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--ink-2);
+}
+
+.sp__update-go,
+.sp__update-later {
+  flex: none;
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.sp__update-go {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.sp__update-go:hover { background: color-mix(in oklab, var(--accent) 86%, var(--ink)); }
+.sp__update-go:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sp__update-later {
+  background: none;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sp__update-later:hover { color: var(--ink); }

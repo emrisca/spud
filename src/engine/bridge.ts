@@ -35,6 +35,21 @@ export type StartupView = {
   running: string | null;
 };
 
+/**
+ * An update as the shell reports it: what is waiting, and how far a download
+ * got. The status is one of `idle`, `checking`, `available`, `downloading`,
+ * `installing`, `restarting`, `upToDate` or `error`.
+ */
+export type UpdateView = {
+  currentVersion: string;
+  status: string;
+  version: string | null;
+  notes: string | null;
+  downloaded: number;
+  total: number | null;
+  error: string | null;
+};
+
 /** What an unassigned strip reports: the engine's own resting values. */
 const blankComp = () => ({
   threshold: -16,
@@ -210,6 +225,18 @@ const MOCK_STATUS: EngineStatus = {
   errors: [],
 };
 
+/** The browser stand-in is never offered a release, because there is no
+ * installer behind the page. */
+const PREVIEW_UPDATE: UpdateView = {
+  currentVersion: "0.1.0",
+  status: "upToDate",
+  version: null,
+  notes: null,
+  downloaded: 0,
+  total: null,
+  error: null,
+};
+
 export const engine = {
   status(): Promise<EngineStatus> {
     return isPreview ? Promise.resolve(MOCK_STATUS) : invoke<EngineStatus>("engine_status");
@@ -298,6 +325,21 @@ export const engine = {
   rescan(): Promise<boolean> {
     if (isPreview) return Promise.resolve(true);
     return invoke<boolean>("run_engine");
+  },
+
+  /** What the updater last found. Polled; the shell changes it on its own clock. */
+  updateState(): Promise<UpdateView> {
+    return isPreview ? Promise.resolve(PREVIEW_UPDATE) : invoke<UpdateView>("update_state");
+  },
+
+  /** Ask the release endpoint again, now. */
+  updateCheck(): Promise<UpdateView> {
+    return isPreview ? Promise.resolve(PREVIEW_UPDATE) : invoke<UpdateView>("update_check");
+  },
+
+  /** Download, verify and install; the shell restarts itself when it lands. */
+  updateInstall(): Promise<void> {
+    return isPreview ? Promise.resolve() : invoke<void>("update_install");
   },
 
   devices(): Promise<[DeviceDesc[], DeviceDesc[]]> {

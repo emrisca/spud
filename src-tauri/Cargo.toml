@@ -22,6 +22,10 @@ tauri-plugin-single-instance = "2"
 # Only for the "choose another copy" button on the sign-in row, and only from
 # Rust: the user picks an executable instead of typing its path.
 tauri-plugin-dialog = "2"
+# Self-update. The release workflow signs each installer with the key whose
+# public half sits in tauri.conf.json, and this refuses anything that signature
+# does not cover.
+tauri-plugin-updater = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

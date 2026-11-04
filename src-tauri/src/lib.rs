@@ -11,6 +11,7 @@ mod sessions;
 mod startup;
 mod state;
 mod store;
+mod update;
 
 use mixer::{Mixer, BUSES, STRIPS};
 use state::ROUTES;
@@ -740,6 +741,9 @@ pub fn run() {
         // Only used from Rust, to let the sign-in entry be pointed at a copy of
         // the app rather than typed in by hand.
         .plugin(tauri_plugin_dialog::init())
+        // The release endpoint, checked after launch and every six hours. The
+        // state the banner reads lives in `update`.
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // The engine is started here rather than before the builder so the
             // single-instance check above has already turned a second copy away.
@@ -851,6 +855,11 @@ pub fn run() {
                 }
             }
 
+            // Registered last, because the first check waits twenty seconds for
+            // the audio thread to settle and never blocks the window.
+            app.manage(update::UpdateHolder::new());
+            update::watch(app.handle().clone());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -869,7 +878,10 @@ pub fn run() {
             startup_state,
             set_startup,
             point_startup_at,
-            choose_startup_exe
+            choose_startup_exe,
+            update::update_state,
+            update::update_check,
+            update::update_install
         ])
         .run(tauri::generate_context!())
         .expect("error while running the console");

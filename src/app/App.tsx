@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppearanceDialog } from "./AppearanceDialog";
+import { UpdateBanner } from "./UpdateBanner";
 import { Console } from "./Console";
 import { DeviceDialog, SettingsDialog, type PickTarget } from "./Dialogs";
 import { DynamicsDialog } from "./DynamicsDialog";
@@ -306,6 +307,10 @@ function Shell() {
           <Gear />
         </button>
       </header>
+
+      {/* Only while a newer release is waiting: it is one row, and it goes away
+          again when the person chooses Later. */}
+      <UpdateBanner />
 
       <main className="sp__body">
         {snapshot ? (

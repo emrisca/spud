@@ -252,6 +252,44 @@ Requirements: Node 18+, a Rust toolchain with the MSVC target, and the WebView2
 runtime (present on Windows 10/11). The Rust half uses `cpal` for the audio
 devices and `windows` for the WASAPI session enumeration.
 
+## Updates
+
+Spud checks `https://github.com/emrisca/spud/releases/latest/download/latest.json`
+twenty seconds after launch and every six hours while it is running. When a newer
+version is waiting, a row appears under the header with that version and the
+first line of its notes. **Update now** downloads, verifies the signature and
+installs it; **Later** hides that version until the next launch. Nothing installs
+without the click, and a failed check is silent, because a machine with no
+network is not a machine with a problem.
+
+The keypair already exists: `.secrets/spud-updater.key` is the private half,
+which Git ignores, and its public half is in `plugins.updater.pubkey` in
+`src-tauri/tauri.conf.json`. That key has no password, so a local release build
+needs only the path:
+
+```sh
+TAURI_SIGNING_PRIVATE_KEY=.secrets/spud-updater.key
+npm run tauri build
+```
+
+Paste the contents of `.secrets/spud-updater.key` into the repository secret
+`TAURI_SIGNING_PRIVATE_KEY`. A key generated without a password needs no
+`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`; set that secret only if the key is ever
+replaced with one that has a password. Pushing a tag such as `v0.1.1` runs
+`.github/workflows/release.yml` on a Windows runner: it installs, type checks,
+builds the NSIS installer, writes `latest.json` beside it and publishes both. The
+installer's per-machine mode means the update raises the usual Windows elevation
+prompt, exactly as installing by hand does.
+
+The installed app reads `latest.json` without a token, so the repository has to
+be public. A private one turns every update check into a 404.
+
+A version bump is three files and one tag: `package.json`,
+`src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json` all say the same number,
+and the tag is `v` plus that number. `tauri-action` interpolates `v__VERSION__`
+from the config, so a tag that drifts publishes a release no installed copy will
+ever be offered.
+
 ## How the audio is put together
 
 ```

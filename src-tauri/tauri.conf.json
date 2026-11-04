@@ -25,9 +25,18 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNGQURBREJEMkI1NUE5MzkKUldRNXFWVXJ2YTJ0UC82dW5BWDdlcGhvWDVxNzF2WGRCL1BQNWJvVDR4WWxHS2ZnWDdnV1BWMUIK",
+      "endpoints": [
+        "https://github.com/emrisca/spud/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "windows": {
       "nsis": {
         "installMode": "perMachine",
