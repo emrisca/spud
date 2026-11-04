@@ -1406,6 +1406,22 @@ button.strip__device:hover {
 .sp__pairs-cable { color: var(--moss); }
 .sp__pairs-arrow { opacity: 0.5; }
 
+/* The settings row's release notes: a few lines of the body, wrapped rather
+   than clipped, because a dialog has room to say what changed. */
+.sp__update-notes {
+  margin-top: 4px;
+  white-space: pre-line;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+.sp__link:disabled {
+  opacity: 0.5;
+  cursor: default;
+  text-decoration: none;
+}
+
 /* ── update banner ───────────────────────────────────────────────── */
 
 /* One row under the header, only while the release endpoint offers a newer

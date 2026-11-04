@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/interior/modal";
 import { PressDepth } from "@/components/interior/press-depth";
-import { engine, type StartupView } from "@/engine/bridge";
+import { engine, isPreview, type StartupView, type UpdateView } from "@/engine/bridge";
 import { cableKey, type DeviceDesc, type EngineStatus } from "@/engine/model";
 
 /** Which control asked for a device: a bus output or a strip input. */
@@ -208,6 +208,8 @@ export function SettingsDialog({
           </span>
         </div>
 
+        <Updates />
+
         <p className="sp__fineprint">
           Spud mixes in this process: it captures each input, sums it into every bus it is
           routed to, and renders each bus to a device. Nothing else has to be installed
@@ -319,3 +321,102 @@ export function DeviceDialog({ target, onClose, onPick }: DeviceProps) {
     </Modal>
   );
 }
+
+/**
+ * The version, and the same check the shell runs on its own clock, on demand.
+ *
+ * The shell asks GitHub when Spud starts and every six hours after that, and the
+ * banner under the header is where a release it found gets acted on. This row is
+ * for the person who would rather not wait, and for the answer to be visible when
+ * it arrives: what is installed, whether anything newer exists, and the first
+ * lines of its notes. An install restarts Spud, so the button is one way only.
+ */
+function Updates() {
+  const [state, setState] = useState<UpdateView | null>(null);
+  const [checking, setChecking] = useState(false);
+  const native = !isPreview;
+
+  useEffect(() => {
+    if (!native) return;
+    let live = true;
+    engine
+      .updateState()
+      .then((next) => {
+        if (live) setState(next);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [native]);
+
+  const check = async () => {
+    setChecking(true);
+    try {
+      setState(await engine.updateCheck());
+    } catch (reason) {
+      setState((current) =>
+        current ? { ...current, status: "error", error: String(reason) } : current,
+      );
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const working =
+    state?.status === "downloading" ||
+    state?.status === "installing" ||
+    state?.status === "restarting";
+  const offered = state?.status === "available" && Boolean(state.version);
+  const version = state?.currentVersion ? `Spud ${state.currentVersion}` : "Spud";
+
+  const note = !native
+    ? "Updates install in the desktop app, not in a browser preview."
+    : working
+      ? state?.status === "downloading"
+        ? `Downloading ${megabytes(state.downloaded)}${state.total ? ` of ${megabytes(state.total)}` : ""}. Spud restarts when it lands.`
+        : "Installing. Spud restarts into the new build."
+      : offered
+        ? `Version ${state?.version} is available. Installing replaces this copy and restarts it.`
+        : state?.status === "error"
+          ? (state.error ?? "The check did not finish.")
+          : state?.status === "upToDate"
+            ? "This is the newest release."
+            : "Checked when Spud starts, and every six hours after that.";
+
+  return (
+    <div className="sp__row" role="group" aria-label="Updates">
+      <span className="sp__row-name">{version}</span>
+      <span className="sp__row-note">{note}</span>
+      {offered && state?.notes ? (
+        <span className="sp__update-notes">
+          {state.notes.split("\n").slice(0, 4).join("\n")}
+        </span>
+      ) : null}
+      <span className="sp__row-actions">
+        {offered || working ? (
+          <button
+            type="button"
+            className="sp__link sp__link--button"
+            disabled={working}
+            onClick={() => void engine.updateInstall().catch(() => undefined)}
+          >
+            {working ? "Installing…" : "Update now"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="sp__link sp__link--button"
+            disabled={!native || checking}
+            onClick={() => void check()}
+          >
+            {checking ? "Checking…" : "Check for updates"}
+          </button>
+        )}
+      </span>
+    </div>
+  );
+}
+
+/** A byte count as the update row writes one. */
+const megabytes = (bytes: number): string => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;

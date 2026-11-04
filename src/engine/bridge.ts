@@ -228,7 +228,7 @@ const MOCK_STATUS: EngineStatus = {
 /** The browser stand-in is never offered a release, because there is no
  * installer behind the page. */
 const PREVIEW_UPDATE: UpdateView = {
-  currentVersion: "0.1.0",
+  currentVersion: "0.1.1",
   status: "upToDate",
   version: null,
   notes: null,
