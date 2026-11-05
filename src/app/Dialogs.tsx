@@ -41,7 +41,7 @@ export function SettingsDialog({
   onChooseExe,
   onUseThisCopy,
 }: SettingsProps) {
-  // The entry can name a different copy than the one running — an installed
+  // The entry can name a different copy than the one running: an installed
   // Spud while a build is open, or a path that moved. Saying which executable
   // Windows will actually start is the difference between a switch that looks
   // right and one that is.
@@ -71,7 +71,7 @@ export function SettingsDialog({
           <span className="sp__row-name">Engine</span>
           <span className="sp__row-note">
             {status
-              ? `${status.edition} ${status.version} · ${status.running ? `${status.inputs} in, ${status.outputs} out` : "no streams open"}${preview ? " · preview data" : ""}`
+              ? `${status.edition}, ${status.running ? `${status.inputs} in and ${status.outputs} out` : "no streams open"}${preview ? ", preview data" : ""}`
               : "starting"}
           </span>
           {status?.errors?.length ? (
@@ -82,6 +82,8 @@ export function SettingsDialog({
             </ul>
           ) : null}
         </div>
+
+        <Updates />
 
         <button type="button" className="sp__row sp__row--button" onClick={onRescan}>
           <span className="sp__row-name">Rescan devices</span>
@@ -107,7 +109,7 @@ export function SettingsDialog({
             <span className="sp__row-name">Launch at sign-in</span>
             <span className="sp__row-note">
               {startup.enabled
-                ? "Windows starts Spud when you sign in — hidden in the notification area, mixing straight away."
+                ? "Windows starts Spud when you sign in: hidden in the notification area, mixing straight away."
                 : "Spud starts only when you open it."}
             </span>
           </span>
@@ -124,7 +126,7 @@ export function SettingsDialog({
             {startup.entry
               ? aimedElsewhere
                 ? "Windows starts this one, not the Spud open now."
-                : "The Spud that is open now — sign-in would start this copy."
+                : "The Spud that is open now, so sign-in would start this copy."
               : "No entry yet. Switching it on above aims it at the copy that is running."}
           </span>
           {startup.entry ? (
@@ -152,7 +154,7 @@ export function SettingsDialog({
           <span className="sp__row-name">Virtual inputs</span>
           <span className="sp__row-note">
             {cableReady
-              ? "One cable per virtual input. Send an app to a cable's Input side in Windows sound settings and it lands on that strip — a different app on a different cable gets its own strip."
+              ? "One cable per virtual input. Send an app to a cable's Input side in Windows sound settings and it lands on that strip, and a different app on a different cable gets its own strip."
               : "No cable found. Spud needs a free signed virtual cable for programs to route audio into it."}
           </span>
           {cableReady ? null : (
@@ -179,11 +181,9 @@ export function SettingsDialog({
             <ul className="sp__pairs">
               {pairs.map((pair) => (
                 <li key={pair.bus}>
-                  <span>{pair.strip}</span>
-                  <span className="sp__pairs-arrow">→</span>
-                  <span className="sp__pairs-cable">{pair.cable}</span>
-                  <span className="sp__pairs-arrow">→</span>
-                  <span>{pair.bus}</span>
+                  {pair.strip} listens to{" "}
+                  <span className="sp__pairs-cable">{pair.cable}</span>; {pair.bus} plays
+                  into it.
                 </li>
               ))}
             </ul>
@@ -193,8 +193,8 @@ export function SettingsDialog({
         <div className="sp__row">
           <span className="sp__row-name">Mic out</span>
           <span className="sp__row-note">
-            Send any input to B1–B3 and that bus plays into the cable. Another program then
-            picks the cable's Output as its microphone — or set it as Windows' default
+            Send any input to B1, B2 or B3 and that bus plays into the cable. Another program then
+            picks the cable's Output as its microphone, or set it as Windows' default
             recording device to cover every program at once. A cable cannot be sent back
             into itself, so that one routing button stays off.
           </span>
@@ -207,8 +207,6 @@ export function SettingsDialog({
             the tray icon to bring it back; right-click it to quit.
           </span>
         </div>
-
-        <Updates />
 
         <p className="sp__fineprint">
           Spud mixes in this process: it captures each input, sums it into every bus it is
@@ -260,16 +258,16 @@ export function DeviceDialog({ target, onClose, onPick }: DeviceProps) {
     >
       {loading ? <p className="sp__fineprint">Reading device list…</p> : null}
       {/* A microphone is a recording device, and Windows will not let an
-          application render into one — the audio engine answers
-          AUDCLNT_E_WRONG_ENDPOINT_TYPE — so no amount of looking will find a
+          application render into one (the audio engine answers
+          AUDCLNT_E_WRONG_ENDPOINT_TYPE), so no amount of looking will find a
           microphone in the list below. Saying so here is the only way the list
           stops looking broken. */}
       {kind === "bus" ? (
         <p className="sp__fineprint">
           Your microphone will not appear here: it is a recording device, and Windows does
           not allow an application to write into one. To put audio back into a microphone,
-          send the input to a cable on B1–B3 and point the program that wants it at that
-          cable&rsquo;s Output — or set the cable as Windows&rsquo; default recording device and every
+          send the input to a cable on B1, B2 or B3 and point the program that wants it at that
+          cable&rsquo;s Output, or set the cable as Windows&rsquo; default recording device and every
           program hears it at once.
         </p>
       ) : null}
@@ -336,8 +334,10 @@ function Updates() {
   const [checking, setChecking] = useState(false);
   const native = !isPreview;
 
+  // Read even in the browser preview: the engine hands back the version this
+  // build is, so the row names a version instead of standing there blank. Only
+  // the check and the install need the shell.
   useEffect(() => {
-    if (!native) return;
     let live = true;
     engine
       .updateState()
@@ -348,7 +348,7 @@ function Updates() {
     return () => {
       live = false;
     };
-  }, [native]);
+  }, []);
 
   const check = async () => {
     setChecking(true);

@@ -2,7 +2,7 @@
  * Meter ballistics.
  *
  * The engine hands back linear peaks 20 times a second. Raw numbers make a
- * jittery bar, so peaks are held for a moment and fall at a fixed rate — the
+ * jittery bar, so peaks are held for a moment and fall at a fixed rate: the
  * behaviour of every hardware meter, and the reason a fader move reads as a
  * move rather than a flicker.
  *
@@ -34,7 +34,7 @@ const rise = (current: number, sample: number) =>
 
 /**
  * Feed one poll in. `buses_post` is the mix *entering* the ceiling, so a bus
- * above `ceiling` is a bus the limiter is holding down — which is what the lamp
+ * above `ceiling` is a bus the limiter is holding down, which is what the lamp
  * reports. The threshold comes from the engine rather than a number here: a copy
  * of it is how the lamp ends up lighting at full scale while the ceiling sits
  * half a decibel lower and the limiter's work goes unshown.

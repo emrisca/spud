@@ -6,7 +6,7 @@
  * of EQ and the meters.
  */
 
-/** Potato's routing targets, in panel order. A1–A5 are physical, B1–B3 virtual. */
+/** Potato's routing targets, in panel order. A1 to A5 are physical, B1 to B3 virtual. */
 export const ROUTES = ["A1", "A2", "A3", "A4", "A5", "B1", "B2", "B3"] as const;
 export type Route = (typeof ROUTES)[number];
 
@@ -54,7 +54,7 @@ export type Strip = {
   comp: number;
   gate: number;
   eq: boolean;
-  /** Treble, mid, bass, body — the order the dialog and the knobs read. */
+  /** Treble, mid, bass, body: the order the dialog and the knobs read. */
   eq_gain: number[];
   /** Low-cut corner in Hz, 0 when it is off. */
   eq_cut: number;
@@ -153,7 +153,7 @@ export const gainToPos = (db: number) =>
 export const posToGain = (pos: number) =>
   GAIN_MIN + clamp(pos, 0, 1) * (GAIN_MAX - GAIN_MIN);
 
-/** `-∞` at the bottom, `+9.7`, `0.0`, `-5.3` — the engine's own resolution. */
+/** `-∞` at the bottom, `+9.7`, `0.0`, `-5.3`, the engine's own resolution. */
 export function formatDb(db: number): string {
   if (!Number.isFinite(db) || db <= GAIN_MIN + 0.05) return "-∞";
   const rounded = Math.abs(db) < 0.05 ? 0 : db;
@@ -182,7 +182,7 @@ export const stripParam = (strip: number, field: string) => `Strip[${strip}].${f
 export const busParam = (bus: number, field: string) => `Bus[${bus}].${field}`;
 
 /**
- * Which cable a device belongs to, ignoring direction — the engine's own rule.
+ * Which cable a device belongs to, ignoring direction: the engine's own rule.
  *
  * Both sides of one cable answer the same key (`CABLE-A Input` and
  * `CABLE-A Output` are both `cable-a`), which is what makes "this input captures
@@ -209,7 +209,7 @@ export function cableKey(name: string): string | null {
  *
  * A virtual input captures a cable's Output side and the matching B bus renders
  * into that same cable's Input side, so routing one into the other is a loop
- * through Windows — the bus would hear itself. The engine refuses it; the
+ * through Windows: the bus would hear itself. The engine refuses it; the
  * console says so before the click.
  */
 export function loopsCable(strip: Strip, buses: Bus[], position: number): boolean {
@@ -260,7 +260,7 @@ export const stripTitle = (strip: Strip) =>
  *
  * The console uses this twice: for the browser stand-in, and to move a control
  * the moment it is touched instead of waiting for the next poll. The engine is
- * still the authority — the next snapshot replaces whatever this guessed.
+ * still the authority: the next snapshot replaces whatever this guessed.
  */
 export function applyParam(snapshot: Snapshot, name: string, value: number): boolean {
   const match = /^(Strip|Bus)\[(\d+)\]\.(.+)$/.exec(name);

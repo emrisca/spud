@@ -40,7 +40,7 @@ export function Fader({ value, onChange, label }: FaderProps) {
 
   const onPointerDown = (event: React.PointerEvent) => {
     // preventDefault keeps the drag from selecting text, but it also suppresses
-    // the focus a click would normally give — so take it explicitly, or the
+    // the focus a click would normally give, so take it explicitly, or the
     // arrow keys stop working the moment the mouse has been used.
     event.preventDefault();
     (event.currentTarget as HTMLDivElement).focus();
@@ -109,6 +109,7 @@ export function Fader({ value, onChange, label }: FaderProps) {
         <div
           key={db}
           className="fader__tick"
+          data-unity={db === 0 ? "" : undefined}
           style={{ bottom: `${gainToPos(db) * 100}%` }}
           aria-hidden="true"
         />

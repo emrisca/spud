@@ -7,9 +7,9 @@
    interior.dev, as the base layer
 
    Everything is a stack of three materials:
-     bezel  — the frame things sit in     (furthest back)
-     panel  — the lifted card             (where content lives)
-     well   — the recessed slot           (where things go in)
+     bezel: the frame things sit in       (furthest back)
+     panel: the lifted card               (where content lives)
+     well:  the recessed slot             (where things go in)
 
    Every value below is also written at runtime by the appearance
    palette, so these are the fallback the app opens with.
@@ -155,8 +155,7 @@ body {
 /* ── typography ────────────────────────────────────────────── */
 
 .meta {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1;
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
@@ -262,7 +261,7 @@ body {
   height: 22px;
   flex: none;
   border-radius: 7px;
-  background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent) 45%, var(--ink)));
+  background: var(--accent);
   box-shadow: var(--shadow-cap);
 }
 
@@ -448,10 +447,8 @@ body {
 
 .appearance__label {
   margin: 0 0 8px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
   color: var(--ink-3);
 }
 
@@ -562,13 +559,6 @@ body {
   border-radius: 10px;
   background: var(--well);
   box-shadow: var(--shadow-well);
-}
-
-.appearance__preview-eyebrow {
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-3);
 }
 
 .appearance__preview-title {

@@ -38,7 +38,7 @@
   flex: none;
   border-radius: 8px;
   color: var(--panel);
-  background: linear-gradient(140deg, var(--accent), color-mix(in oklab, var(--accent) 45%, var(--ink)));
+  background: var(--accent);
   box-shadow: var(--shadow-cap);
 }
 
@@ -61,9 +61,8 @@
   border-radius: 999px;
   background: var(--well);
   box-shadow: var(--shadow-row);
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  letter-spacing: 0.01em;
   color: var(--ink-2);
   white-space: nowrap;
 }
@@ -167,11 +166,11 @@
 /* Group names, not decoration: sentence case at a size that reads. They used to
    be 9.5 px tracked capitals, which is smaller than any label they sit above. */
 .section-head {
-  padding-left: 2px;
-  font-size: 10.5px;
+  padding: 0 2px 5px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.01em;
   color: var(--ink-2);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .section-head--virtual { color: color-mix(in oklab, var(--moss) 62%, var(--ink-2)); }
@@ -193,11 +192,13 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--hairline);
 }
 
 .section-note {
   color: var(--ink-3);
-  font-size: 10px;
+  font-size: 10.5px;
   white-space: nowrap;
 }
 
@@ -235,7 +236,8 @@
 
 .strip__label {
   width: 100%;
-  padding: 1px 2px;
+  min-height: 24px;
+  padding: 3px 2px;
   border: 0;
   border-radius: 5px;
   background: none;
@@ -267,8 +269,9 @@
 }
 
 .strip__device {
+  min-height: 24px;
   padding: 0 2px;
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.3;
   color: var(--ink-3);
   white-space: nowrap;
@@ -299,7 +302,7 @@
   color: var(--ink);
 }
 
-.strip__unit { font-size: 9px; color: var(--ink-3); }
+.strip__unit { font-size: 10px; color: var(--ink-3); }
 
 .strip__buttons { display: flex; gap: 3px; }
 
@@ -314,7 +317,7 @@
 /* small square toggles: mute, solo, mono, bus mute… */
 .mini {
   flex: 1;
-  height: 22px;
+  height: 24px;
   min-width: 0;
   padding: 0;
   border: 0;
@@ -323,9 +326,9 @@
   box-shadow: var(--shadow-row);
   color: var(--ink-2);
   font: inherit;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 650;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition: background-color 0.12s ease, color 0.12s ease;
 }
@@ -342,8 +345,8 @@
    state is the quiet one: moss, the same green the meters use, and no border
    shouting at a console where nothing is wrong. */
 .mini--limit {
-  font-size: 8.5px;
-  letter-spacing: 0.04em;
+  font-size: 10px;
+  letter-spacing: 0.01em;
   color: var(--ink-3);
 }
 
@@ -366,16 +369,16 @@
 }
 
 .route {
-  height: 20px;
+  height: 24px;
   padding: 0;
   border: 0;
   border-radius: 4px;
   background: var(--well);
   box-shadow: var(--shadow-row);
   color: var(--ink-3);
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 550;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition: background-color 0.1s ease, color 0.1s ease;
 }
@@ -420,7 +423,7 @@
 
 .chip {
   flex: 1;
-  height: 20px;
+  height: 24px;
   padding: 0 2px;
   border: 0;
   border-radius: 5px;
@@ -428,7 +431,7 @@
   box-shadow: var(--shadow-row);
   color: var(--ink-3);
   font: inherit;
-  font-size: 9.5px;
+  font-size: 10.5px;
   letter-spacing: 0.01em;
   cursor: pointer;
 }
@@ -458,10 +461,9 @@
   background: var(--well);
   box-shadow: var(--shadow-row);
   color: var(--ink);
-  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 12px;
   font-weight: 650;
-  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .bus__key--virtual {
@@ -499,7 +501,7 @@
   box-shadow: var(--shadow-row);
   color: var(--ink-3);
   font: inherit;
-  font-size: 8.5px;
+  font-size: 10px;
   line-height: 1.25;
   /* A single long word ("Headphones") has to break somewhere in 44 px. */
   overflow-wrap: anywhere;
@@ -519,7 +521,7 @@ button.bus__device:hover { color: var(--ink); }
 }
 
 .bus__buttons { display: flex; flex-direction: column; gap: 3px; }
-.bus__buttons .mini { height: 19px; font-size: 9px; flex: none; }
+.bus__buttons .mini { height: 24px; font-size: 10px; flex: none; }
 
 /* ── fader ───────────────────────────────────────────────────────── */
 
@@ -555,7 +557,7 @@ button.bus__device:hover { color: var(--ink); }
   width: 5px;
   transform: translateX(-50%);
   border-radius: 3px;
-  background: linear-gradient(to top, color-mix(in oklab, var(--accent) 55%, transparent), var(--accent));
+  background: var(--accent);
   pointer-events: none;
 }
 
@@ -569,6 +571,15 @@ button.bus__device:hover { color: var(--ink); }
   pointer-events: none;
 }
 
+/* 0 dB: the one tick that is a reference rather than a scale mark. */
+.fader__tick[data-unity] {
+  right: 0;
+  width: 10px;
+  height: 2px;
+  background: var(--ink-3);
+  opacity: 1;
+}
+
 .fader__thumb {
   position: absolute;
   left: 50%;
@@ -576,7 +587,7 @@ button.bus__device:hover { color: var(--ink); }
   height: 11px;
   transform: translate(-50%, 50%);
   border-radius: 3px;
-  background: linear-gradient(var(--panel), color-mix(in oklab, var(--panel) 82%, var(--ink)));
+  background: var(--panel);
   box-shadow: var(--shadow-cap), inset 0 0 0 1px var(--hairline-strong);
   pointer-events: none;
 }
@@ -666,18 +677,16 @@ button.bus__device:hover { color: var(--ink); }
 .fx__head h3 {
   margin: 0;
   flex: 1;
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--ink-2);
 }
 
-.fx__head .chip { flex: none; min-width: 34px; height: 19px; }
+.fx__head .chip { flex: none; min-width: 34px; height: 24px; }
 
 .fx__amount {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 9.5px;
+  font-size: 10.5px;
   color: var(--ink-3);
 }
 
@@ -695,18 +704,18 @@ button.bus__device:hover { color: var(--ink); }
   margin-bottom: 3px;
 }
 
-.param__label { font-size: 10.5px; color: var(--ink-2); }
+.param__label { font-size: 11px; color: var(--ink-2); }
 
 .param__value {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 9.5px;
+  font-size: 10.5px;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 
 .param__range {
   width: 100%;
-  height: 16px;
+  height: 20px;
   margin: 0;
   appearance: none;
   -webkit-appearance: none;
@@ -724,9 +733,9 @@ button.bus__device:hover { color: var(--ink); }
 .param__range::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;
-  width: 13px;
-  height: 13px;
-  margin-top: -4.5px;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
   border: 0;
   border-radius: 999px;
   background: var(--panel);
@@ -740,8 +749,8 @@ button.bus__device:hover { color: var(--ink); }
 }
 
 .param__range::-moz-range-thumb {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   border: 0;
   border-radius: 999px;
   background: var(--panel);
@@ -827,7 +836,7 @@ button.bus__device:hover { color: var(--ink); }
 .sp__path {
   margin-top: 3px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 9px;
+  font-size: 10px;
   color: var(--ink-3);
   word-break: break-all;
 }
@@ -856,11 +865,9 @@ button.bus__device:hover { color: var(--ink); }
 }
 
 .sp__group-name {
-  margin: 6px 0 4px;
-  font-size: 9px;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  margin: 8px 0 4px;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--ink-3);
 }
 
@@ -894,7 +901,7 @@ button.bus__device:hover { color: var(--ink); }
 .sp__device-hw {
   max-width: 42%;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 8.5px;
+  font-size: 10px;
   color: var(--ink-3);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -957,32 +964,25 @@ button.bus__device:hover { color: var(--ink); }
   gap: 7px;
   flex: none;
   padding: 0 4px;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.02em;
+  font-size: 10.5px;
   color: var(--ink-3);
-  height: 16px;
+  height: 18px;
 }
 
-.sp__foot-sep { opacity: 0.5; }
 .sp__foot-item--busy { color: var(--accent); }
 
 /* virtual input card */
 
 .strip--virtual {
   gap: 5px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--moss) 5%, var(--panel)),
-    var(--panel) 42%
-  );
+  background: color-mix(in oklab, var(--moss) 5%, var(--panel));
   box-shadow: var(--shadow-lift), inset 0 0 0 1px color-mix(in oklab, var(--moss) 18%, transparent);
 }
 
 .strip__rate {
   padding: 0 2px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: -0.01em;
   color: var(--ink-3);
   white-space: nowrap;
@@ -995,11 +995,9 @@ button.bus__device:hover { color: var(--ink); }
   align-items: center;
   gap: 4px;
   margin: 0 2px 4px;
-  font-size: 9px;
-  font-weight: 650;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-2);
 }
 
 .strip__eq,
@@ -1018,10 +1016,10 @@ button.bus__device:hover { color: var(--ink); }
 
 .chip--tiny {
   flex: none;
-  min-width: 26px;
-  height: 16px;
-  padding: 0 3px;
-  font-size: 8.5px;
+  min-width: 30px;
+  height: 24px;
+  padding: 0 5px;
+  font-size: 10px;
   margin-left: auto;
 }
 
@@ -1032,7 +1030,7 @@ button.bus__device:hover { color: var(--ink); }
 }
 
 .matrix-key {
-  height: 18px;
+  height: 24px;
   padding: 0;
   border: 0;
   border-radius: 4px;
@@ -1040,7 +1038,7 @@ button.bus__device:hover { color: var(--ink); }
   box-shadow: var(--shadow-row);
   color: var(--ink-3);
   font: inherit;
-  font-size: 9px;
+  font-size: 10px;
   cursor: pointer;
 }
 
@@ -1063,8 +1061,7 @@ button.bus__device:hover { color: var(--ink); }
 }
 
 .knob__label {
-  font-size: 8.5px;
-  letter-spacing: 0.02em;
+  font-size: 10px;
   color: var(--ink-3);
 }
 
@@ -1073,7 +1070,7 @@ button.bus__device:hover { color: var(--ink); }
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  background: radial-gradient(circle at 50% 32%, var(--panel), var(--sub));
+  background: var(--panel);
   box-shadow:
     var(--shadow-cap),
     inset 0 0 0 1px var(--hairline-strong),
@@ -1101,7 +1098,7 @@ button.bus__device:hover { color: var(--ink); }
 
 .knob__value {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 9px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
   color: var(--ink-2);
 }
@@ -1133,13 +1130,13 @@ button.bus__device:hover { color: var(--ink); }
 .strip__apps-count {
   margin-left: auto;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 8.5px;
+  font-size: 10px;
   color: var(--ink-3);
 }
 
 .app-row {
   display: grid;
-  grid-template-columns: 6px minmax(0, 1fr) 17px;
+  grid-template-columns: 6px minmax(0, 1fr) 24px;
   align-items: center;
   gap: 3px;
   padding: 2px 0 2px;
@@ -1161,7 +1158,7 @@ button.bus__device:hover { color: var(--ink); }
 
 .app-row__name {
   min-width: 0;
-  font-size: 9.5px;
+  font-size: 10.5px;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
@@ -1174,8 +1171,8 @@ button.bus__device:hover { color: var(--ink); }
 }
 
 .app-row__mute {
-  width: 17px;
-  height: 15px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   border-radius: 3px;
@@ -1183,7 +1180,7 @@ button.bus__device:hover { color: var(--ink); }
   box-shadow: var(--shadow-row);
   color: var(--ink-3);
   font: inherit;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -1197,7 +1194,7 @@ button.bus__device:hover { color: var(--ink); }
 .app-row__vol {
   grid-column: 1 / -1;
   width: 100%;
-  height: 10px;
+  height: 14px;
   margin: 0;
   appearance: none;
   -webkit-appearance: none;
@@ -1214,9 +1211,9 @@ button.bus__device:hover { color: var(--ink); }
 .app-row__vol::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;
-  width: 9px;
-  height: 9px;
-  margin-top: -3px;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
   border: 0;
   border-radius: 999px;
   background: var(--panel);
@@ -1230,8 +1227,8 @@ button.bus__device:hover { color: var(--ink); }
 }
 
 .app-row__vol::-moz-range-thumb {
-  width: 9px;
-  height: 9px;
+  width: 12px;
+  height: 12px;
   border: 0;
   border-radius: 999px;
   background: var(--panel);
@@ -1240,11 +1237,12 @@ button.bus__device:hover { color: var(--ink); }
 
 /* The device line under a strip name is a picker, not a caption. */
 button.strip__device {
+  min-height: 24px;
   padding: 0 2px;
   border: 0;
   background: none;
   font: inherit;
-  font-size: 8.5px;
+  font-size: 10px;
   line-height: 1.3;
   color: var(--ink-3);
   text-align: center;
@@ -1258,18 +1256,6 @@ button.strip__device:hover {
   color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-/* The bus column's last button slot explains what the bus is, now that every
-   bus is a real output and there is no virtual placeholder. */
-.bus__note {
-  display: grid;
-  place-items: center;
-  height: 22px;
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-3);
 }
 
 .sp__link {
@@ -1316,14 +1302,14 @@ button.strip__device:hover {
   box-shadow: var(--shadow-row);
 }
 
-.eq-bands .param { margin-top: 5px; }
+.eq-bands .param { margin-top: 6px; }
 .eq-bands .param:first-of-type { margin-top: 1px; }
-.eq-bands .param__range { height: 14px; }
+.eq-bands .param__range { height: 20px; }
 
 .eq-hz {
   margin-left: 6px;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: -0.01em;
   color: var(--ink-3);
 }
@@ -1338,15 +1324,13 @@ button.strip__device:hover {
 
 .eq-presets .chip {
   flex: 0 0 auto;
-  height: 23px;
+  height: 24px;
   padding: 0 12px;
-  font-size: 10px;
+  font-size: 10.5px;
 }
 
 .eq-hint {
-  font-size: 9.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 10.5px;
   color: var(--ink-3);
 }
 
@@ -1357,7 +1341,7 @@ button.strip__device:hover {
 /* ── gate & compressor ───────────────────────────────────────────── */
 
 /* Two columns: eleven controls in one column would run off the bottom of the
-   window, and each pair reads as a group anyway — what it hears, how fast it
+   window, and each pair reads as a group anyway: what it hears, how fast it
    moves. */
 .dyn-grid {
   display: grid;
@@ -1370,7 +1354,7 @@ button.strip__device:hover {
 }
 
 .dyn-grid .param { margin-top: 5px; }
-.dyn-grid .param__range { height: 14px; }
+.dyn-grid .param__range { height: 20px; }
 
 /* The note under a control name is where the setting explains itself; at this
    width it has to wrap rather than push the value out of the row. */
@@ -1392,19 +1376,12 @@ button.strip__device:hover {
   margin: 6px 0 0;
   padding: 0;
   list-style: none;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 10.5px;
+  line-height: 1.45;
   color: var(--ink-3);
 }
 
-.sp__pairs li {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
 .sp__pairs-cable { color: var(--moss); }
-.sp__pairs-arrow { opacity: 0.5; }
 
 /* The settings row's release notes: a few lines of the body, wrapped rather
    than clipped, because a dialog has room to say what changed. */
@@ -1469,8 +1446,8 @@ button.strip__device:hover {
 
 .sp__update-state {
   flex: none;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-2);
 }
 

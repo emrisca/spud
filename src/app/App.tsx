@@ -273,7 +273,7 @@ function Shell() {
         <span className={`sp__pill sp__pill--${state}`}>
           <i className="sp__dot" />
           {state === "live"
-            ? `${status?.inputs} in · ${status?.outputs} out`
+            ? `${status?.inputs} in, ${status?.outputs} out`
             : state === "preview"
               ? "preview data"
               : state === "idle"
@@ -338,20 +338,12 @@ function Shell() {
 
       <footer className="sp__foot">
         <span className="sp__foot-item">
-          {snapshot ? `${snapshot.strips.length} in · ${snapshot.buses.length} buses` : "—"}
-        </span>
-        <span className="sp__foot-sep">/</span>
-        <span className="sp__foot-item">
-          {isPreview ? "in-memory stand-in — no audio is touched" : "mixing in this process"}
+          {isPreview ? "in-memory stand-in, no audio is touched" : "mixing in this process"}
         </span>
         <span className="sp__spacer" />
         {restarting ? (
           <span className="sp__foot-item sp__foot-item--busy">reopening streams…</span>
-        ) : (
-          <span className="sp__foot-item">
-            {snapshot ? stripTitle(snapshot.strips[0]) : ""}
-          </span>
-        )}
+        ) : null}
       </footer>
 
       <DeviceDialog target={target} onClose={() => setPicking(null)} onPick={choose} />
@@ -373,7 +365,8 @@ function Shell() {
         status={status}
         preview={isPreview}
         cableReady={cableReady}
-        pairs={pairs}          startup={startup}
+        pairs={pairs}
+          startup={startup}
           onStartup={(enabled) => void toggleStartup(enabled)}
           onChooseExe={chooseStartupExe}
           onUseThisCopy={() => void pointStartupAt(startup.running ?? "")}

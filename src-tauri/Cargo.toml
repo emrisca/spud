@@ -1,6 +1,6 @@
 [package]
 name = "spud"
-version = "0.1.1"
+version = "0.1.2"
 description = "An eight-in, eight-bus mixing console with its own WASAPI engine"
 edition = "2021"
 rust-version = "1.77.2"

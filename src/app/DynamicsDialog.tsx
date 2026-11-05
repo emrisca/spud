@@ -7,7 +7,7 @@ import { stripParam, stripTitle, type Strip } from "@/engine/model";
  *
  * Both are wired to audio rather than to a picture of a control: the engine's
  * `mixer.rs` applies every one of these to the strip's samples before the fader.
- * The dialog opens on the strip's chip — there is no room for five knobs beside
+ * The dialog opens on the strip's chip, because there is no room for five knobs beside
  * a microphone's fader.
  */
 
@@ -91,8 +91,8 @@ export function DynamicsDialog({ strip, write, onClose }: Props) {
     <Modal
       open={strip !== null}
       onClose={onClose}
-      title={strip ? `Input & Dynamics — ${stripTitle(strip)}` : "Input & Dynamics"}
-      description="The level into this strip, then the gate and the compressor — all ahead of the fader, so they shape it on its way to every bus it feeds."
+      title={strip ? `Input & Dynamics, ${stripTitle(strip)}` : "Input & Dynamics"}
+      description="The level into this strip, then the gate and the compressor, all ahead of the fader, so they shape it on its way to every bus it feeds."
       maxWidth={500}
       maxHeight="min(86vh, 720px)"
       footer={
@@ -338,7 +338,7 @@ function Slider({
         max={max}
         step={step}
         value={value}
-        aria-label={`${label} — ${note}`}
+        aria-label={`${label}, ${note}`}
         onChange={(event) => onChange(Number(event.target.value))}
       />
     </label>

@@ -32,7 +32,7 @@ type Props = {
 /**
  * One input's equaliser, in full.
  *
- * A hardware column has no room for knobs — its fader is the tall thing — so the
+ * A hardware column has no room for knobs (its fader is the tall thing), so the
  * EQ chip opens this instead. It is the only place the low cut and the body band
  * appear, because they are the two settings that make a microphone sound like a
  * microphone rather than a room.
@@ -56,7 +56,7 @@ export function MicEqDialog({ strip, write, onClose }: Props) {
     <Modal
       open={strip !== null}
       onClose={onClose}
-      title={strip ? `Mic EQ — ${stripTitle(strip)}` : "Mic EQ"}
+      title={strip ? `Mic EQ, ${stripTitle(strip)}` : "Mic EQ"}
       description="Shapes this input on its way to every bus it is routed to."
       maxWidth={470}
       maxHeight="min(86vh, 720px)"

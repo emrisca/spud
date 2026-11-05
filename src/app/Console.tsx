@@ -157,7 +157,7 @@ function StripHeader({ strip }: { strip: Strip }) {
       <button
         type="button"
         className="strip__device"
-        title={strip.device || "No device assigned — click to choose one"}
+        title={strip.device || "No device assigned. Click to choose one"}
         onClick={() => pickInput(strip.index)}
       >
         {strip.device || (strip.virtual_input ? "no cable" : "choose device")}
@@ -170,8 +170,8 @@ function StripHeader({ strip }: { strip: Strip }) {
  * The routing buttons, one per bus.
  *
  * A virtual input captures a cable, and the matching B bus renders into that
- * same cable. Sending it there would be a loop through Windows — the bus would
- * hear itself — so that one button is off limits. The engine refuses it too;
+ * same cable. Sending it there would be a loop through Windows: the bus would
+ * hear itself, so that one button is off limits. The engine refuses it too;
  * this is the explanation rather than the enforcement.
  */
 function Routing({ strip }: { strip: Strip }) {
@@ -189,7 +189,7 @@ function Routing({ strip }: { strip: Strip }) {
             aria-label={`Send ${stripTitle(strip)} to ${route}`}
             title={
               looped
-                ? `${route} renders into the cable this input captures — sending audio there would loop`
+                ? `${route} renders into the cable this input captures, so sending audio there would loop`
                 : undefined
             }
             disabled={looped}
@@ -270,8 +270,8 @@ function HardwareColumn({ strip }: { strip: Strip }) {
       <Routing strip={strip} />
       <div className="strip__fx">
         {/* The three knobs of a virtual input do not fit beside a microphone's
-            fader, so both panels open from here: the equaliser — which is also
-            where the low cut and the body band live — and the input level with
+            fader, so both panels open from here: the equaliser (which is also
+            where the low cut and the body band live) and the input level with
             the gate and the compressor, which share one dialog because they
             share the signal path. */}
         <DynamicsChips strip={strip} onEq={() => editEq(strip.index)} onDynamics={() => editDynamics(strip.index)} />
@@ -284,7 +284,7 @@ function HardwareColumn({ strip }: { strip: Strip }) {
  * `EQ` and `DYN`, lit while the thing behind them is switched in.
  *
  * `onEq` is left off for a virtual input, whose equaliser is already on the
- * column as knobs and a switch — there is no sense in offering it twice.
+ * column as knobs and a switch, so there is no sense in offering it twice.
  */
 function DynamicsChips({
   strip,
@@ -305,7 +305,7 @@ function DynamicsChips({
           data-on={strip.eq ? "true" : undefined}
           aria-pressed={strip.eq}
           aria-label={`Equaliser for ${stripTitle(strip)}`}
-          title={`${stripTitle(strip)} equaliser — ${strip.eq ? "on" : "off"}`}
+          title={`${stripTitle(strip)} equaliser, ${strip.eq ? "on" : "off"}`}
           onClick={onEq}
         >
           EQ
@@ -316,7 +316,7 @@ function DynamicsChips({
           data-on={dynamics ? "true" : undefined}
         aria-pressed={dynamics}
         aria-label={`Input level, gate and compressor for ${stripTitle(strip)}`}
-        title={`${stripTitle(strip)} — ${dynamicsLabel(strip)} · input ${formatDb(strip.trim)} dB`}
+        title={`${stripTitle(strip)}: ${dynamicsLabel(strip)}, input ${formatDb(strip.trim)} dB`}
         onClick={onDynamics}
       >
         DYN
@@ -329,16 +329,16 @@ function DynamicsChips({
  * A virtual input: the equaliser above the same fader and routing as any other
  * input.
  *
- * The three knobs are the mixer's three bands, in band order — treble, mid,
- * bass — and they only move audio while the EQ chip is lit.
+ * The three knobs are the mixer's three bands, in band order (treble, mid,
+ * bass), and they only move audio while the EQ chip is lit.
  */
 function VirtualColumn({ strip }: { strip: Strip }) {
   const { write, snapshot, apps, editDynamics } = useConsole();
   const playing = apps.find((entry) => entry.strip === strip.index)?.apps ?? [];
-  const rate = snapshot.sample_rate ? `${(snapshot.sample_rate / 1000).toFixed(1)} kHz` : "—";
+  const rate = snapshot.sample_rate ? `${(snapshot.sample_rate / 1000).toFixed(1)} kHz` : "no rate";
   // The window between the cable and the speakers, which is the number that
   // matters when a video is a fraction of a second out of step with its sound.
-  const lag = snapshot.latency ? `${Math.round(snapshot.latency)} ms` : "—";
+  const lag = snapshot.latency ? `${Math.round(snapshot.latency)} ms` : "no buffer";
 
   return (
     <article
@@ -350,7 +350,7 @@ function VirtualColumn({ strip }: { strip: Strip }) {
         className="strip__rate"
         title={`Mixed at ${rate}; the console holds ${lag} of buffer, and the devices add their own periods on top`}
       >
-        {rate} · {lag}
+        {rate}, {lag}
       </span>
 
       <section className="strip__eq" aria-label={`${stripTitle(strip)} equaliser`}>
@@ -399,7 +399,7 @@ function VirtualColumn({ strip }: { strip: Strip }) {
       <Routing strip={strip} />
       <div className="strip__fx">
         {/* A virtual input carries another program's audio, so its chain starts
-            switched out — but a game or a browser on a cable is exactly what a
+            switched out, but a game or a browser on a cable is exactly what a
             gate and a compressor are for, so the chip is here. */}
         <DynamicsChips strip={strip} onDynamics={() => editDynamics(strip.index)} />
       </div>
@@ -442,7 +442,7 @@ function AppRow({ app }: { app: AppSession }) {
   return (
     <div className="app-row" data-playing={app.playing ? "true" : undefined} data-muted={app.mute ? "true" : undefined}>
       <span className="app-row__dot" aria-hidden="true" />
-      <span className="app-row__name" title={`${app.name} — pid ${app.pid}`}>
+      <span className="app-row__name" title={`${app.name}, pid ${app.pid}`}>
         {app.name}
       </span>
       <button
@@ -488,7 +488,16 @@ function BusColumn({ bus }: { bus: Bus }) {
 
   return (
     <article className={`bus${bus.mute ? " bus--muted" : ""}`} data-bus={bus.index}>
-      <span className={`bus__key${bus.physical ? "" : " bus__key--virtual"}`}>{bus.key}</span>
+      <span
+        className={`bus__key${bus.physical ? "" : " bus__key--virtual"}`}
+        title={
+          bus.physical
+            ? "A hardware output: speakers, headphones, an interface"
+            : "Renders into that cable's Input side, so another program can record it from the cable's Output. A microphone, as far as it knows"
+        }
+      >
+        {bus.key}
+      </span>
       <div className="bus__body">
         <Meter kind="bus" index={bus.index} />
         <Fader
@@ -501,7 +510,7 @@ function BusColumn({ bus }: { bus: Bus }) {
       <button
         type="button"
         className="bus__device"
-        title={bus.device || "No output assigned — click to choose one"}
+        title={bus.device || "No output assigned. Click to choose one"}
         onClick={() => pickDevice(bus.index)}
       >
         {/* The column is 44 px wide: the vendor suffix is what made the name
@@ -539,22 +548,12 @@ function BusColumn({ bus }: { bus: Bus }) {
           title={
             bus.limit
               ? `Holds ${bus.key} just under full scale, so a strip raised by EQ or makeup gain cannot arrive clipped`
-              : `${bus.key} is unlimited — a boosted strip can reach the device over full scale and be clipped there`
+              : `${bus.key} is unlimited, so a boosted strip can reach the device over full scale and be clipped there`
           }
           onClick={() => toggle(busParam(bus.index, "Limit"), bus.limit)}
         >
           LIM
         </button>
-        <span
-          className="bus__note"
-          title={
-            bus.physical
-              ? "A hardware output: speakers, headphones, an interface"
-              : "Renders into that cable's Input side, so another program can record it from the cable's Output — a microphone as far as it knows"
-          }
-        >
-          {bus.physical ? "out" : "mic"}
-        </span>
       </div>
     </article>
   );

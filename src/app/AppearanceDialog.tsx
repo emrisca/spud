@@ -89,7 +89,7 @@ export function AppearanceDialog({ open, onClose }: AppearanceDialogProps) {
                     className="appearance__preset-swatch"
                     aria-hidden="true"
                     style={{
-                      background: `linear-gradient(135deg, ${oklchCss(presetTokens.primary)}, ${oklchCss(presetTokens.secondary)})`,
+                      background: oklchCss(presetTokens.primary),
                     }}
                   />
                   {preset.name}
@@ -148,10 +148,10 @@ export function AppearanceDialog({ open, onClose }: AppearanceDialogProps) {
         <section>
           <h3 className="appearance__label">Preview</h3>
           <div className="appearance__preview">
-            <span className="appearance__preview-eyebrow">Release notes</span>
-            <p className="appearance__preview-title">Version 0.1.0</p>
+            <p className="appearance__preview-title">This hue, on a panel</p>
             <p className="appearance__preview-line">
-              Muted ink sits one step back from the heading, and borders stay quiet.
+              Muted ink one step back from the heading, a hairline that stays quiet, and
+              the two accents this hue derives.
             </p>
             <div className="appearance__preview-row">
               <span

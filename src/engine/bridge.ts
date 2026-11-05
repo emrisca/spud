@@ -3,7 +3,7 @@
  *
  * In the desktop window every call is a Tauri command into the mixer in this
  * process. In a browser (`npm run dev` opened directly) there is no engine, so a
- * small in-memory stand-in answers instead — with the same shapes, so the
+ * small in-memory stand-in answers instead, with the same shapes, so the
  * console can be designed and tested without touching anyone's audio.
  */
 
@@ -112,7 +112,7 @@ function initialSnapshot(): Snapshot {
     routes: ROUTES.map((route) => route === "A1"),
     position: [false, false, false, false],
     mc: false,
-    // The engine seeds the voice chain — EQ, gate and compressor — on the
+    // The engine seeds the voice chain (EQ, gate and compressor) on the
     // hardware inputs; the virtual ones start switched out, because they are
     // carrying other programs already.
     comp: index < 5 ? 1 : 0,
