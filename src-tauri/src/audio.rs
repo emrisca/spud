@@ -20,8 +20,9 @@
 use crate::mixer::{self, Limiter, Mixer, Reader, Ring, StripChain, BUSES, RATE, STRIPS};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{FromSample, Sample, SampleFormat, SizedSample, Stream, StreamConfig};
-use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 /// Which device is wired to which channel. Empty means unassigned.
 #[derive(Clone)]
@@ -133,26 +134,97 @@ impl Drop for Engine {
     }
 }
 
+/// How often the audio thread looks for a device that has appeared or left.
+///
+/// Windows has no change event a cpal stream can subscribe to, so the endpoint
+/// list is itself the signal: enumerate it, compare the names with the last set,
+/// and reopen the streams when one the console uses has moved. Two seconds is
+/// quick enough that a plugged microphone turns up before the hand is off the
+/// cable, and far enough apart that the enumeration costs nothing worth noting.
+const DEVICE_POLL: Duration = Duration::from_secs(2);
+
 fn run(rx: Receiver<Msg>, mix: Arc<Mixer>, status: Arc<Mutex<Status>>, config: Arc<Mutex<Config>>) {
     let host = cpal::default_host();
     let rings: Vec<Arc<Ring>> = (0..STRIPS).map(|_| Arc::new(Ring::new(2))).collect();
-    let mut live: Vec<Stream>;
+    let mut known = device_signature();
 
     loop {
         let desired = config.lock().map(|c| c.clone()).unwrap_or_default();
-        live = build(&host, &desired, &mix, &rings, &status);
+        let live = build(&host, &desired, &mix, &rings, &status);
 
-        match rx.recv() {
-            Ok(Msg::Rebuild) => continue,
-            _ => break,
+        // Wait for a request to rebuild, and while waiting notice a device that
+        // arrived or left. The previous streams are closed before the next set
+        // is built, so an endpoint never carries two streams from this process.
+        let rebuild = loop {
+            match rx.recv_timeout(DEVICE_POLL) {
+                Ok(Msg::Rebuild) => break true,
+                Ok(Msg::Stop) | Err(RecvTimeoutError::Disconnected) => break false,
+                Err(RecvTimeoutError::Timeout) => {
+                    let now = device_signature();
+                    if now == known {
+                        continue;
+                    }
+                    let desired = config.lock().map(|c| c.clone()).unwrap_or_default();
+                    let relevant = wiring_changed(&desired, &known, &now);
+                    known = now;
+                    if relevant {
+                        break true;
+                    }
+                }
+            }
+        };
+
+        drop(live);
+        if !rebuild {
+            break;
         }
     }
-    drop(live);
+
     if let Ok(mut slot) = status.lock() {
         slot.running = false;
         slot.inputs.clear();
         slot.outputs.clear();
     }
+}
+
+/// The endpoints Windows offers right now, direction included, sorted.
+///
+/// Sorted and de-duplicated, so a different enumeration order is not mistaken
+/// for a device that arrived, and prefixed with the direction so a name that
+/// appears on both sides stays two entries.
+fn device_signature() -> Vec<String> {
+    let (outputs, inputs) = devices();
+    let mut names: Vec<String> = outputs
+        .iter()
+        .map(|device| format!("out:{}", device.name))
+        .chain(inputs.iter().map(|device| format!("in:{}", device.name)))
+        .collect();
+    names.sort();
+    names.dedup();
+    names
+}
+
+/// Whether the wiring asks for a device that arrived or left between two lists.
+///
+/// A webcam appearing is not a reason to interrupt the mix; the microphone the
+/// console is capturing from coming back is. An empty slot is not a device the
+/// wiring uses, so a slot set to **None** stays empty.
+fn wiring_changed(config: &Config, before: &[String], after: &[String]) -> bool {
+    let moved = |entry: &str| {
+        let present = |list: &[String]| list.binary_search_by(|name| name.as_str().cmp(entry)).is_ok();
+        present(before) != present(after)
+    };
+    let strips = config
+        .strip_device
+        .iter()
+        .filter(|name| !name.trim().is_empty())
+        .map(|name| format!("in:{}", name.trim()));
+    let buses = config
+        .bus_device
+        .iter()
+        .filter(|name| !name.trim().is_empty())
+        .map(|name| format!("out:{}", name.trim()));
+    strips.chain(buses).any(|entry| moved(&entry))
 }
 
 /// Build every assigned stream, replacing the previous set.
@@ -555,7 +627,6 @@ impl BusStream {
         let from = self.bus_level;
         let mono = bus.mono();
         let limit_on = bus.limit_on();
-        let mut loudest = 0.0f32;
         for (position, frame) in self.mixbuf.iter_mut().enumerate() {
             let weight = (position + 1) as f32 / frames as f32;
             let gain = from + (target - from) * weight;
@@ -564,7 +635,6 @@ impl BusStream {
                 let sum = (sample[0] + sample[1]) * 0.5;
                 sample = [sum, sum];
             }
-            loudest = loudest.max(sample[0].abs()).max(sample[1].abs());
             *frame = [sample[0] * gain, sample[1] * gain];
         }
         self.bus_level = target;
@@ -579,17 +649,14 @@ impl BusStream {
             self.limit.reset();
         }
 
-        // `loudest` is the mix going into the bus, which is what the meter reads.
-        // `held` is that mix after the bus gain but before the limiter, so a
-        // console comparing it with the published ceiling lights its lamp exactly
-        // while the ceiling is holding the bus down — rather than at full scale,
-        // which the limiter now stops the bus from ever reaching. Switched off,
-        // nothing is holding the bus down however far it is driven, so the lamp
-        // is given nothing to light on: it reports the ceiling at work, and a
-        // dark lamp beside a meter past the ceiling reads as what it is — this
-        // bus is unlimited.
+        // The meter reads the mix as it leaves the fader, after the bus gain and
+        // the mono fold and before the ceiling. That is the level the lamp
+        // compares with the published ceiling, so a meter past the ceiling and a
+        // lit lamp describe the same signal: this is how far the bus is being
+        // driven. Switched off, nothing is holding the bus down however far it
+        // is driven, so the lamp is given nothing to light on.
         let held = if limit_on { entering } else { 0.0 };
-        self.mix.set_bus_peak(self.bus, loudest, held);
+        self.mix.set_bus_peak(self.bus, entering, held);
     }
 }
 
@@ -928,6 +995,47 @@ mod tests {
         assert_eq!(config.bus_device[7], "CABLE-B Input (VB-Audio Virtual Cable B)");
     }
 
+    /// The automatic reopen is for a device the wiring uses, not for every
+    /// endpoint Windows happens to report.
+    #[test]
+    fn only_a_device_the_wiring_uses_asks_for_a_rebuild() {
+        let mut config = Config::default();
+        config.strip_device[0] = "Microphone (USB Audio)".into();
+        config.bus_device[0] = "Headphones".into();
+        let before = vec![
+            "in:Microphone (USB Audio)".to_string(),
+            "out:Headphones".to_string(),
+        ];
+
+        // A capture device nobody assigned is not a reason to interrupt the mix.
+        let mut unrelated = before.clone();
+        unrelated.push("in:Webcam".to_string());
+        unrelated.sort();
+        assert!(!wiring_changed(&config, &before, &unrelated));
+
+        // The assigned microphone coming back is.
+        let gone = vec!["out:Headphones".to_string()];
+        assert!(wiring_changed(&config, &gone, &before));
+        // And so is it leaving.
+        assert!(wiring_changed(&config, &before, &gone));
+
+        // An empty slot that could take the new device changes nothing: the
+        // console has no assignment there, so no stream has to open.
+        let mut empty = Config::default();
+        empty.bus_device[0] = "Headphones".into();
+        assert!(!wiring_changed(&empty, &gone, &before));
+    }
+
+    #[test]
+    fn the_device_signature_is_sorted_and_unique() {
+        let first = device_signature();
+        assert_eq!(first, device_signature(), "two polls of one machine agree");
+        assert!(first.windows(2).all(|pair| pair[0] < pair[1]), "sorted, no repeats");
+        assert!(first
+            .iter()
+            .all(|name| name.starts_with("in:") || name.starts_with("out:")));
+    }
+
     #[test]
     fn the_device_lists_are_usable() {
         let (outputs, inputs) = devices();
@@ -1174,10 +1282,17 @@ mod tests {
         let mut config = Config::default();
         config.bus_device[0] = "a speaker that does not exist".into();
         engine.assign(config);
-        std::thread::sleep(Duration::from_millis(600));
-        let status = engine.status();
+        // Opening fourteen endpoints and closing them again is not a fixed
+        // amount of time, so wait for the engine's own report rather than
+        // assuming a sleep is long enough.
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        let mut status = engine.status();
+        while status.missing.len() != 1 && std::time::Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(50));
+            status = engine.status();
+        }
         assert!(!status.running);
-        assert_eq!(status.missing.len(), 1);
+        assert_eq!(status.missing.len(), 1, "the one assignment that cannot open");
         assert!(status.errors.iter().any(|e| e.contains("not an output device")));
     }
 }

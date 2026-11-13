@@ -19,8 +19,8 @@
 .sp__bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 12px 0 10px;
+  gap: 10px;
+  padding: 0 10px;
   height: 52px;
   flex: none;
   border-radius: 16px;
@@ -335,6 +335,21 @@
 
 .mini:hover { color: var(--ink); }
 
+/* One focus ring for every control the console draws. The console is used with
+   the keyboard as often as with a mouse, and a 24 px chip is where a ring is
+   easiest to lose. */
+.mini:focus-visible,
+.route:focus-visible,
+.chip:focus-visible,
+.bus__device:focus-visible,
+.sp__device:focus-visible,
+.sp__link--button:focus-visible,
+.bus__name:focus-visible,
+.app-row__mute:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .mini[aria-pressed="true"] {
   background: color-mix(in oklab, var(--accent) 16%, var(--well));
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 55%, transparent);
@@ -469,6 +484,42 @@
 .bus__key--virtual {
   background: color-mix(in oklab, var(--moss) 15%, var(--well));
   color: var(--moss);
+}
+
+/* The key and the bus's name, in that order. The key stays: every routing chip
+   on the console is named after it, and a bus called Stream is still B1. */
+.bus__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bus__name,
+.bus__name-input {
+  min-height: 24px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--ink-3);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bus__name { cursor: text; }
+.bus__name:hover { background: var(--sub); color: var(--ink); }
+
+.bus__name-input {
+  width: 100%;
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--ink);
 }
 
 .bus__body {
@@ -657,7 +708,7 @@ button.bus__device:hover { color: var(--ink); }
 .fx {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .fx__group {
@@ -766,7 +817,7 @@ button.bus__device:hover { color: var(--ink); }
   flex-direction: column;
   gap: 2px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px;
   border: 0;
   border-radius: 10px;
   background: var(--well);
@@ -783,7 +834,7 @@ button.bus__device:hover { color: var(--ink); }
 .sp__row--switch {
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
   text-align: left;
 }
@@ -846,10 +897,17 @@ button.bus__device:hover { color: var(--ink); }
 .sp__row-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* The sign-in actions live outside the switch, because a button inside a button
+   is not a button. The row keeps them grouped with the switch they belong to. */
+.sp__row--links { padding: 8px 10px; }
+
 .sp__link--button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   padding: 0;
   border: 0;
   background: none;
@@ -870,6 +928,31 @@ button.bus__device:hover { color: var(--ink); }
   font-weight: 600;
   color: var(--ink-3);
 }
+
+/* The list's loading state: the shape of the rows that are coming, not a line of
+   text saying that something is happening. */
+.sp__skeletons { display: flex; flex-direction: column; gap: 2px; }
+
+.sp__skeleton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 9px;
+}
+
+.sp__skeleton-name,
+.sp__skeleton-hw {
+  height: 9px;
+  border-radius: 4px;
+  background: var(--sub);
+}
+
+.sp__skeleton-name { flex: 1; max-width: 62%; }
+.sp__skeleton-hw { width: 64px; }
+.sp__skeleton:nth-child(2) .sp__skeleton-name { max-width: 48%; }
+.sp__skeleton:nth-child(3) .sp__skeleton-name { max-width: 56%; }
+.sp__skeleton:nth-child(4) .sp__skeleton-name { max-width: 42%; }
 
 .sp__device {
   display: flex;
@@ -924,7 +1007,7 @@ button.bus__device:hover { color: var(--ink); }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 32px;
+  padding: 10px;
   border-radius: 16px;
   background: var(--panel);
   box-shadow: var(--shadow-lift);
@@ -971,23 +1054,15 @@ button.bus__device:hover { color: var(--ink); }
 
 .sp__foot-item--busy { color: var(--accent); }
 
+/* A figure, so its digits line up; not mono, because it is a sentence. */
+.sp__foot-item--figures { font-variant-numeric: tabular-nums; }
+
 /* virtual input card */
 
 .strip--virtual {
   gap: 5px;
   background: color-mix(in oklab, var(--moss) 5%, var(--panel));
   box-shadow: var(--shadow-lift), inset 0 0 0 1px color-mix(in oklab, var(--moss) 18%, transparent);
-}
-
-.strip__rate {
-  padding: 0 2px;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: -0.01em;
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .strip__caption {
@@ -1120,11 +1195,21 @@ button.bus__device:hover { color: var(--ink); }
 .strip__apps {
   flex: 0 1 auto;
   min-height: 0;
+  /* Seven rows, then it scrolls. The cap is on the panel, not on the data: the
+     list used to stop at five sessions and drop the rest. */
+  max-height: 168px;
   overflow-y: auto;
   padding: 4px 5px 5px;
   border-radius: 8px;
   background: var(--well);
   box-shadow: var(--shadow-row);
+}
+
+.strip__apps-empty {
+  margin: 0;
+  padding: 2px 0;
+  font-size: 10px;
+  color: var(--ink-3);
 }
 
 .strip__apps-count {
@@ -1194,7 +1279,7 @@ button.bus__device:hover { color: var(--ink); }
 .app-row__vol {
   grid-column: 1 / -1;
   width: 100%;
-  height: 14px;
+  height: 18px;
   margin: 0;
   appearance: none;
   -webkit-appearance: none;
@@ -1211,9 +1296,9 @@ button.bus__device:hover { color: var(--ink); }
 .app-row__vol::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  margin-top: -4px;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
   border: 0;
   border-radius: 999px;
   background: var(--panel);
@@ -1227,8 +1312,8 @@ button.bus__device:hover { color: var(--ink); }
 }
 
 .app-row__vol::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border: 0;
   border-radius: 999px;
   background: var(--panel);
@@ -1353,6 +1438,9 @@ button.strip__device:hover {
   box-shadow: var(--shadow-row);
 }
 
+/* The denoiser has one control, so it takes the whole width rather than half. */
+.dyn-grid--single { grid-template-columns: 1fr; }
+
 .dyn-grid .param { margin-top: 5px; }
 .dyn-grid .param__range { height: 20px; }
 
@@ -1464,7 +1552,7 @@ button.strip__device:hover {
 
 .sp__update-go {
   background: var(--accent);
-  color: #fff;
+  color: var(--panel);
   font-weight: 600;
 }
 

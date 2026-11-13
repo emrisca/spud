@@ -76,6 +76,8 @@ pub struct StripParams {
     /// compressor. The fader cannot serve this purpose: it sits after the chain,
     /// so it changes what a listener hears and not what the gate hears.
     trim: AtomicU32,
+    /// How much noise the suppressor takes out: 0 is off, 1 is the full depth.
+    denoiser: AtomicU32,
     mute: AtomicBool,
     solo: AtomicBool,
     mono: AtomicBool,
@@ -146,6 +148,7 @@ impl Default for StripParams {
         StripParams {
             gain: AtomicU32::new(bits(0.0)),
             trim: AtomicU32::new(bits(0.0)),
+            denoiser: AtomicU32::new(bits(0.0)),
             mute: AtomicBool::new(false),
             solo: AtomicBool::new(false),
             mono: AtomicBool::new(false),
@@ -202,6 +205,15 @@ impl StripParams {
 
     pub fn set_trim(&self, db: f32) {
         self.trim.store(bits(db.clamp(TRIM_MIN, TRIM_MAX)), RELAXED);
+    }
+
+    /// How much noise the suppressor takes out: 0 is off, 1 is the full depth.
+    pub fn denoiser(&self) -> f32 {
+        float(self.denoiser.load(RELAXED)).clamp(0.0, 1.0)
+    }
+
+    pub fn set_denoiser(&self, amount: f32) {
+        self.denoiser.store(bits(amount.clamp(0.0, 1.0)), RELAXED);
     }
 
     pub fn mute(&self) -> bool {
@@ -479,14 +491,16 @@ impl Mixer {
         }
     }
 
-    /// `value` is the level going *into* the bus, which is what its meter reads.
+    /// `value` is the level leaving the bus fader, which is what its meter
+    /// reads. It used to be the sum before the fader, so pulling a bus down left
+    /// its meter where it was and the meter could not confirm silence.
     ///
-    /// `pre_ceiling` is the same mix after the bus gain and mono fold but before
-    /// the limiter, so comparing it with [`ceiling`] answers "was this bus held
-    /// down", which is what the lamp means. It is zero when the limiter is off,
-    /// because then nothing is holding the bus down. The accessor that reads it
-    /// is still called `bus_post` because the console's levels message is named
-    /// that way; the value itself is not a post-limiter one.
+    /// `pre_ceiling` is the same level while the ceiling is holding the bus
+    /// down, so comparing it with [`ceiling`] answers "was this bus limited",
+    /// which is what the lamp means. It is zero when the limiter is off, because
+    /// then nothing is holding the bus down. The accessor that reads it is still
+    /// called `bus_post` because the console's levels message is named that way;
+    /// the value itself is not a post-limiter one.
     pub fn set_bus_peak(&self, bus: usize, value: f32, pre_ceiling: f32) {
         if let Some(slot) = self.bus_peak.get(bus) {
             publish_peak(slot, value);
@@ -841,6 +855,87 @@ fn glide(ms: f32) -> f32 {
     }
 }
 
+/// How far above the learned floor a signal is left alone, in dB.
+const NOISE_MARGIN_DB: f32 = 6.0;
+
+/// A broadband noise suppressor.
+///
+/// The gate shuts an input between phrases. This works while somebody is
+/// talking: it learns the quietest thing the input hears, treats that as the
+/// room, and pulls the signal down as it approaches that floor. Hiss, a fan and
+/// a noisy preamp come down. A voice sits well above the floor and is left
+/// alone.
+///
+/// It is broadband rather than spectral, which is what keeps it cheap enough to
+/// run on every strip of every output stream. The reduction is smooth rather
+/// than switched, so the room does not pump between words, and the control
+/// scales the whole thing, so at 0 it is a multiply by exactly one.
+#[derive(Clone, Copy, Default)]
+pub struct Denoiser {
+    /// The quietest level seen, in dBFS. It falls quickly and rises slowly, so
+    /// a room is learned in a second and a word never becomes the floor.
+    floor: f32,
+    /// Smoothed signal level in dBFS.
+    level: f32,
+    /// The reduction being applied, in dB, zero or negative.
+    gain_db: f32,
+    /// False until a frame has been seen, so the first block adopts the level it
+    /// finds instead of starting from an invented floor.
+    live: bool,
+}
+
+impl Denoiser {
+    pub fn process(&mut self, strip: &StripParams, frames: &mut [[f32; 2]]) {
+        let amount = strip.denoiser();
+        if amount <= 0.0 {
+            self.live = false;
+            return;
+        }
+        // The most that is taken out at the floor, scaled by the control.
+        let depth = 30.0 * amount;
+        let rise = glide(4.0);
+        let fall = glide(120.0);
+        let learn_quickly = glide(30.0);
+        let learn_slowly = glide(4_000.0);
+        let smooth = glide(40.0);
+
+        if !self.live {
+            let first = to_db(head(frames));
+            self.floor = first;
+            self.level = first;
+            self.gain_db = 0.0;
+            self.live = true;
+        }
+
+        for frame in frames.iter_mut() {
+            let key = to_db(frame[0].abs().max(frame[1].abs()));
+            let coeff = if key > self.level { rise } else { fall };
+            self.level += (key - self.level) * coeff;
+
+            // Follow anything quieter at once, so the room settles, and rise
+            // slowly, so speech is never mistaken for the noise around it.
+            let coeff = if self.level < self.floor {
+                learn_quickly
+            } else {
+                learn_slowly
+            };
+            self.floor += (self.level - self.floor) * coeff;
+
+            let over = self.level - self.floor;
+            let target = if over >= NOISE_MARGIN_DB {
+                0.0
+            } else if over <= 0.0 {
+                -depth
+            } else {
+                -depth * (1.0 - over / NOISE_MARGIN_DB)
+            };
+            self.gain_db += (target - self.gain_db) * smooth;
+            let gain = from_db(self.gain_db);
+            *frame = [frame[0] * gain, frame[1] * gain];
+        }
+    }
+}
+
 /// A noise gate: shut while nobody is talking, open while somebody is.
 ///
 /// It follows the loudest of the two channels, so the two never disagree about
@@ -1180,16 +1275,17 @@ impl StripEq {
 /// One strip's channel strip, for one output stream.
 ///
 /// The order is the one a channel strip uses, and each step is there for the
-/// next one: the input trim sets the level everything else works at, the low cut
-/// goes next so rumble is gone before the gate decides whether anyone is
-/// talking, the gate follows so the room is not riding the compressor, the bands
-/// shape what is left, and the compressor finishes the job on the level the
+/// next one: the input trim sets the level everything else works at, the
+/// denoiser takes the room down, the low cut removes the rumble the denoiser
+/// should not be learning from, the gate shuts what is left between phrases, the
+/// bands shape the voice, and the compressor finishes the job on the level the
 /// bands produced.
 #[derive(Clone, Copy, Default)]
 pub struct StripChain {
     eq: StripEq,
     gate: Gate,
     comp: Compressor,
+    denoise: Denoiser,
 }
 
 impl StripChain {
@@ -1202,6 +1298,7 @@ impl StripChain {
         for frame in frames.iter_mut() {
             *frame = [frame[0] * trim, frame[1] * trim];
         }
+        self.denoise.process(strip, frames);
         self.eq.process_cut(strip, frames);
         self.gate.process(strip, frames);
         self.eq.process_bands(strip, frames);
@@ -1232,6 +1329,55 @@ mod tests {
         let strip = StripParams::default();
         strip.set_gain(40.0);
         assert_eq!(strip.gain(), GAIN_MAX);
+    }
+
+    /// At the learned floor the input is pulled down. A voice far above it is
+    /// not, which is the whole point of learning the floor instead of pinning a
+    /// threshold.
+    #[test]
+    fn the_denoiser_pulls_the_floor_down_and_leaves_a_voice() {
+        let strip = StripParams::default();
+        strip.set_denoiser(1.0);
+        let mut denoise = Denoiser::default();
+
+        // Two seconds of a steady, quiet room.
+        let room = vec![[0.002f32, 0.002]; 960];
+        let mut block = room.clone();
+        let mut tail = 0.0;
+        for _ in 0..100 {
+            block.copy_from_slice(&room);
+            denoise.process(&strip, &mut block);
+            tail = peak(&block);
+        }
+        assert!(
+            tail < 0.001,
+            "the room should be at least 6 dB down after two seconds, got {tail}"
+        );
+
+        // A voice sits 40 dB above that floor and is left where it is. The gain
+        // takes a moment to come back, so the last block is the one measured.
+        let voice = vec![[0.2f32, 0.2]; 960];
+        for _ in 0..10 {
+            block.copy_from_slice(&voice);
+            denoise.process(&strip, &mut block);
+        }
+        let out = peak(&block);
+        assert!((out - 0.2).abs() < 0.02, "a voice should pass, got {out}");
+    }
+
+    #[test]
+    fn the_denoiser_at_zero_is_passthrough_and_the_control_is_clamped() {
+        let strip = StripParams::default();
+        let mut denoise = Denoiser::default();
+        let mut frames = vec![[0.123f32, -0.456]; 64];
+        let before = frames.clone();
+        denoise.process(&strip, &mut frames);
+        assert_eq!(frames, before, "off is a passthrough, not a quiet version");
+
+        strip.set_denoiser(4.0);
+        assert_eq!(strip.denoiser(), 1.0);
+        strip.set_denoiser(-1.0);
+        assert_eq!(strip.denoiser(), 0.0);
     }
 
     #[test]

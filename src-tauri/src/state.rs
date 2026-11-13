@@ -178,7 +178,7 @@ pub fn snapshot(mix: &Mixer, config: &Config, labels: &Labels, status: &Status) 
                 eq_cut: params.cut(),
                 pan: 0.0,
                 limit: 0.0,
-                denoiser: 0.0,
+                denoiser: params.denoiser(),
                 fx1: 0.0,
                 fx2: 0.0,
                 // The order of these two is `mixer::COMP_FIELDS` and

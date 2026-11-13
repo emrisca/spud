@@ -129,6 +129,7 @@ fn apply(mix: &Mixer, config: &audio::Config, name: &str, value: f32) -> bool {
             match field {
                 "Gain" => strip.set_gain(value),
                 "Trim" => strip.set_trim(value),
+                "Denoiser" => strip.set_denoiser(value),
                 "Mute" => strip.set_mute(on),
                 "Solo" => strip.set_solo(on),
                 "Mono" => strip.set_mono(on),
@@ -507,6 +508,19 @@ mod tests {
         assert!(mix.strips[0].routed_to(5));
     }
 
+    /// A bus name is stored where the console writes it, and only a label gets
+    /// through that path.
+    #[test]
+    fn a_bus_name_is_stored_by_the_label_command() {
+        let labels = Mutex::new(state::Labels::default());
+        assert!(apply_text(&labels, "Bus[5].Label", "Stream"));
+        assert_eq!(labels.lock().unwrap().bus[5], "Stream");
+        assert!(apply_text(&labels, "Bus[5].Label", ""));
+        assert_eq!(labels.lock().unwrap().bus[5], "", "clearing is a rename too");
+        assert!(!apply_text(&labels, "Bus[5].Gain", "3"));
+        assert!(!apply_text(&labels, "Strip[0].Label", &"x".repeat(65)));
+    }
+
     /// The whole point of the store: a console saved to disk comes back as it
     /// was, and a route that has become a loop is dropped on the way in.
     #[test]
@@ -609,6 +623,7 @@ mod tests {
         assert!(apply(&mix, &config, "Strip[0].Comp", 1.0));
         assert!(apply(&mix, &config, "Strip[0].Comp.Ratio", 2.5));
         assert!(apply(&mix, &config, "Strip[0].Trim", 6.0));
+        assert!(apply(&mix, &config, "Strip[0].Denoiser", 0.5));
         assert!(!apply(&mix, &config, "Strip[0].Gate.Nonsense", 1.0));
         assert!(!apply(&mix, &config, "Strip[0].Comp.Nonsense", 1.0));
 
@@ -617,6 +632,7 @@ mod tests {
         assert!(mix.strips[0].comp_on());
         assert_eq!(mix.strips[0].comp(1), 2.5);
         assert_eq!(mix.strips[0].trim(), 6.0, "the input level is written by name too");
+        assert_eq!(mix.strips[0].denoiser(), 0.5, "and the denoiser amount");
 
         // Writing a control is also what marks the strip as the person's own.
         assert!(!mix.strips[0].dynamics_touched());

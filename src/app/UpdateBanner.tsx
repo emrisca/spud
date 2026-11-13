@@ -62,14 +62,14 @@ export function UpdateBanner() {
         <p className="sp__update-title">Spud {update.version} is available</p>
         <p className="sp__update-note">
           {working
-            ? `Downloading ${progress}…`
+            ? `Downloading ${progress}...`
             : (update.notes?.split("\n")[0] ??
               "A newer build is ready to replace this one.")}
         </p>
       </div>
       {working ? (
         <span className="sp__update-state">
-          {update.status === "downloading" ? progress : "installing…"}
+          {update.status === "downloading" ? progress : "installing..."}
         </span>
       ) : (
         <>

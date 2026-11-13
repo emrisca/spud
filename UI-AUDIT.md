@@ -110,10 +110,11 @@ Each line names the gate, what was checked, and why this screen is different.
 - **C1b**, guard: `HUE_TRACK` and the chroma `--track` paint a range of hues
   and saturations from the palette being chosen. Reason: the track is the
   control's range, and a solid fill cannot show a hue wheel.
-- **T4**, guard: the eleven remaining `font-family: var(--font-mono)` rules all
+- **T4**, guard: the ten remaining `font-family: var(--font-mono)` rules all
   render a number, a unit, a count, a path or a device id (`strip__readout`,
-  `bus__db`, `knob__value`, `param__value`, `strip__rate`, `.eq-hz`,
-  `fx__amount`, `strip__apps-count`, `sp__path`, `sp__device-hw`). Reason: the
+  `bus__db`, `knob__value`, `param__value`, `.eq-hz`, `fx__amount`,
+  `strip__apps-count`, `sp__path`, `sp__device-hw`,
+  `.appearance__slider-value`). Reason: the
   console is read by comparing figures down a column, and tabular width is the
   point of them.
 - **T4**, guard: the one hit at `styles.css:96` is the `--font-mono` token
@@ -148,3 +149,50 @@ Each line names the gate, what was checked, and why this screen is different.
 - F6 answered: `::selection` and `scrollbar-color` themed from the palette.
 - F13 answered: the window frame is native on purpose; the app draws no title
   bar.
+
+## Second pass
+
+Run again after the engine learned to notice devices and the console lost its
+per-strip rate line.
+
+- **Hierarchy.** The virtual strips repeated `48.0 kHz, 20 ms` on all three
+  columns. The figure is a property of the console, not of a strip, so it moved
+  to the footer once and the virtual columns gave the height back.
+- **Settings.** Four rows explained the product rather than setting anything:
+  the sign-in path, `Mic out`, `Closing the window`, and a closing paragraph.
+  The path is now shown inside the sign-in switch, the tray behaviour is one
+  line, and `Mic out` lives in the output picker, where somebody looking for
+  their microphone will be. The two cable links to one page became one.
+- **Loading.** The device list drew "Reading device list..." as a sentence. It
+  now draws four skeleton rows the height of the real ones, so the dialog does
+  not jump when the list arrives.
+- **Focus.** Mute, solo, mono, route, `LIM`, `EQ`/`DYN`, the bus device picker,
+  the per-app mute and the settings links now share one 2px focus ring; before,
+  they fell back to whatever the webview drew.
+- **Colour.** The update button's `#fff` became `var(--panel)`, the same
+  on-accent colour every other filled button in the app uses.
+- **Polling.** The window took a fresh snapshot twice a second and re-rendered
+  the whole console for it. It now compares the answer with the last one, so an
+  idle console does no layout work; a control being moved still repaints on the
+  next poll because the engine's answer changed.
+- **Copy.** Single-character ellipses became three periods, the page title lost
+  its dash, and the theme storage key stopped being `hitboxer.palette`.
+
+Lint after the second pass: **0 floor, 14 reflex**, one fewer than before because
+`strip__rate` is gone.
+
+## Third pass
+
+- **Bus names.** The engine, the snapshot and the store have carried a bus label
+  since the first release, and nothing ever showed or set one. The key now has
+  the name under it: click to rename, Enter to commit, Escape to back out, the
+  same gesture as a strip's label. The key stays visible, because every routing
+  chip on the console is named after it.
+- **Per-app rows.** The list drew the first five sessions and dropped the rest,
+  so a sixth program on a cable had no volume and no mute at all. Every row is
+  drawn now, in a scrolling panel capped at seven rows so the fader keeps its
+  height, and a virtual input with nothing playing says so instead of showing an
+  empty box. A keyboard move on a row's slider no longer stops the row following
+  Windows, and a row is keyed by its process rather than its name.
+- **Denoiser.** Its switch and amount sit with the gate and the compressor, in
+  signal order, and the `DYN` chip lights when any of the three is on.

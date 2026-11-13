@@ -27,6 +27,14 @@ type SettingsProps = {
   onUseThisCopy: () => void;
 };
 
+/**
+ * Settings: what the engine has open, what it starts, and how it looks.
+ *
+ * Everything else the console could explain lives where the question is asked.
+ * The microphone note is in the output picker, where somebody looks for their
+ * microphone; the tray behaviour is one line at the bottom. A settings window
+ * that repeats the README is a settings window nobody reads.
+ */
 export function SettingsDialog({
   open,
   status,
@@ -71,8 +79,10 @@ export function SettingsDialog({
           <span className="sp__row-name">Engine</span>
           <span className="sp__row-note">
             {status
-              ? `${status.edition}, ${status.running ? `${status.inputs} in and ${status.outputs} out` : "no streams open"}${preview ? ", preview data" : ""}`
-              : "starting"}
+              ? status.running
+                ? `${status.inputs} inputs and ${status.outputs} outputs open${preview ? ", preview data" : ""}`
+                : `No streams open${preview ? ", preview data" : ""}`
+              : "Starting"}
           </span>
           {status?.errors?.length ? (
             <ul className="sp__errors">
@@ -88,8 +98,8 @@ export function SettingsDialog({
         <button type="button" className="sp__row sp__row--button" onClick={onRescan}>
           <span className="sp__row-name">Rescan devices</span>
           <span className="sp__row-note">
-            Reopens every stream and fills unassigned slots. Do this after plugging in an
-            interface or installing the virtual cable.
+            Reopens every stream and fills empty inputs and outputs. A device you plug
+            in or remove also reopens the streams by itself within a few seconds.
           </span>
         </button>
 
@@ -109,9 +119,16 @@ export function SettingsDialog({
             <span className="sp__row-name">Launch at sign-in</span>
             <span className="sp__row-note">
               {startup.enabled
-                ? "Windows starts Spud when you sign in: hidden in the notification area, mixing straight away."
+                ? aimedElsewhere
+                  ? "Windows starts the copy below when you sign in. That is not the copy open now."
+                  : "Windows starts this copy when you sign in, hidden in the notification area."
                 : "Spud starts only when you open it."}
             </span>
+            {startup.enabled && startup.entry ? (
+              <span className="sp__path" title={startup.entry}>
+                {startup.entry}
+              </span>
+            ) : null}
           </span>
           <span
             className="sp__switch"
@@ -120,42 +137,25 @@ export function SettingsDialog({
           />
         </button>
 
-        <div className="sp__row">
-          <span className="sp__row-name">The copy it starts</span>
-          <span className="sp__row-note">
-            {startup.entry
-              ? aimedElsewhere
-                ? "Windows starts this one, not the Spud open now."
-                : "The Spud that is open now, so sign-in would start this copy."
-              : "No entry yet. Switching it on above aims it at the copy that is running."}
-          </span>
-          {startup.entry ? (
-            <span className="sp__path" title={startup.entry}>
-              {startup.entry}
-            </span>
-          ) : null}
-          <span className="sp__row-actions">
+        {startup.enabled ? (
+          <div className="sp__row sp__row--links">
             <button type="button" className="sp__link sp__link--button" onClick={onChooseExe}>
-              Choose another copy…
+              Choose another copy...
             </button>
             {aimedElsewhere ? (
-              <button
-                type="button"
-                className="sp__link sp__link--button"
-                onClick={onUseThisCopy}
-              >
+              <button type="button" className="sp__link sp__link--button" onClick={onUseThisCopy}>
                 Use this copy
               </button>
             ) : null}
-          </span>
-        </div>
+          </div>
+        ) : null}
 
         <div className="sp__row">
           <span className="sp__row-name">Virtual inputs</span>
           <span className="sp__row-note">
             {cableReady
-              ? "One cable per virtual input. Send an app to a cable's Input side in Windows sound settings and it lands on that strip, and a different app on a different cable gets its own strip."
-              : "No cable found. Spud needs a free signed virtual cable for programs to route audio into it."}
+              ? "One cable per virtual input. Send a program to a cable's Input side in Windows sound settings and it lands on that strip."
+              : "No cable found. A virtual input needs a signed virtual cable for programs to route audio into it."}
           </span>
           {cableReady ? null : (
             <a
@@ -164,54 +164,25 @@ export function SettingsDialog({
               target="_blank"
               rel="noreferrer"
             >
-              Get VB-CABLE (free)
-            </a>
-          )}
-          {cableReady ? null : (
-            <a
-              className="sp__link"
-              href="https://vb-audio.com/Cable/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Add the CABLE-A and CABLE-B pack
+              Get VB-CABLE (free, and the A+B pack fills all three)
             </a>
           )}
           {pairs.length ? (
             <ul className="sp__pairs">
               {pairs.map((pair) => (
                 <li key={pair.bus}>
-                  {pair.strip} listens to{" "}
-                  <span className="sp__pairs-cable">{pair.cable}</span>; {pair.bus} plays
-                  into it.
+                  {pair.strip} listens to <span className="sp__pairs-cable">{pair.cable}</span>;
+                  {" "}
+                  {pair.bus} plays into it.
                 </li>
               ))}
             </ul>
           ) : null}
         </div>
 
-        <div className="sp__row">
-          <span className="sp__row-name">Mic out</span>
-          <span className="sp__row-note">
-            Send any input to B1, B2 or B3 and that bus plays into the cable. Another program then
-            picks the cable's Output as its microphone, or set it as Windows' default
-            recording device to cover every program at once. A cable cannot be sent back
-            into itself, so that one routing button stays off.
-          </span>
-        </div>
-
-        <div className="sp__row">
-          <span className="sp__row-name">Closing the window</span>
-          <span className="sp__row-note">
-            The window hides to the notification area and the mix keeps running. Left-click
-            the tray icon to bring it back; right-click it to quit.
-          </span>
-        </div>
-
         <p className="sp__fineprint">
-          Spud mixes in this process: it captures each input, sums it into every bus it is
-          routed to, and renders each bus to a device. Nothing else has to be installed
-          except the cable the virtual inputs use.
+          Closing the window hides Spud to the notification area and the mix keeps
+          running. Left-click the tray icon to bring it back; right-click it to quit.
         </p>
       </div>
     </Modal>
@@ -256,7 +227,18 @@ export function DeviceDialog({ target, onClose, onPick }: DeviceProps) {
       maxWidth={540}
       maxHeight="min(80vh, 640px)"
     >
-      {loading ? <p className="sp__fineprint">Reading device list…</p> : null}
+      {/* A list takes a shape while it loads, not a sentence. Four rows is what
+          fits without the dialog jumping when the real list arrives. */}
+      {loading ? (
+        <div className="sp__skeletons" aria-hidden="true">
+          {[0, 1, 2, 3].map((row) => (
+            <div className="sp__skeleton" key={row}>
+              <span className="sp__skeleton-name" />
+              <span className="sp__skeleton-hw" />
+            </div>
+          ))}
+        </div>
+      ) : null}
       {/* A microphone is a recording device, and Windows will not let an
           application render into one (the audio engine answers
           AUDCLNT_E_WRONG_ENDPOINT_TYPE), so no amount of looking will find a
@@ -264,11 +246,11 @@ export function DeviceDialog({ target, onClose, onPick }: DeviceProps) {
           stops looking broken. */}
       {kind === "bus" ? (
         <p className="sp__fineprint">
-          Your microphone will not appear here: it is a recording device, and Windows does
-          not allow an application to write into one. To put audio back into a microphone,
-          send the input to a cable on B1, B2 or B3 and point the program that wants it at that
-          cable&rsquo;s Output, or set the cable as Windows&rsquo; default recording device and every
-          program hears it at once.
+          Your microphone will not appear here. It is a recording device, and Windows
+          does not allow an application to write into one. To send audio back to a
+          microphone, route the input to B1, B2 or B3, then pick that cable&rsquo;s Output
+          in the program that needs it. Setting that Output as Windows&rsquo; default
+          recording device covers every program at once.
         </p>
       ) : null}
       <div className="sp__stack">
@@ -311,8 +293,8 @@ export function DeviceDialog({ target, onClose, onPick }: DeviceProps) {
         })}
         {!loading && devices.length === 0 ? (
           <p className="sp__fineprint">
-            Windows reported no devices for this direction. Check that the audio service is
-            running, then rescan from settings.
+            Windows reported no devices for this direction. Check that the audio service
+            is running, then rescan from settings.
           </p>
         ) : null}
       </div>
@@ -401,7 +383,7 @@ function Updates() {
             disabled={working}
             onClick={() => void engine.updateInstall().catch(() => undefined)}
           >
-            {working ? "Installing…" : "Update now"}
+            {working ? "Installing..." : "Update now"}
           </button>
         ) : (
           <button
@@ -410,7 +392,7 @@ function Updates() {
             disabled={!native || checking}
             onClick={() => void check()}
           >
-            {checking ? "Checking…" : "Check for updates"}
+            {checking ? "Checking..." : "Check for updates"}
           </button>
         )}
       </span>

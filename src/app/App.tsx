@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppearanceDialog } from "./AppearanceDialog";
 import { UpdateBanner } from "./UpdateBanner";
 import { Console } from "./Console";
@@ -56,10 +56,34 @@ function Shell() {
     running: null,
   });
 
+  /**
+   * The last snapshot and status the window accepted, as text.
+   *
+   * The mixer is polled twice a second and most polls find nothing changed.
+   * Comparing the answer with the last one keeps an idle console from
+   * re-rendering eight strips and eight buses for nothing; a fader being dragged
+   * still lands, because the engine's answer then differs from the last poll.
+   */
+  const seen = useRef({ status: "", snapshot: "" });
+
+  const acceptStatus = useCallback((next: EngineStatus) => {
+    const key = JSON.stringify(next);
+    if (key === seen.current.status) return;
+    seen.current.status = key;
+    setStatus(next);
+  }, []);
+
+  const acceptSnapshot = useCallback((next: Snapshot) => {
+    const key = JSON.stringify(next);
+    if (key === seen.current.snapshot) return;
+    seen.current.snapshot = key;
+    setSnapshot(next);
+  }, []);
+
   const refresh = useCallback(async () => {
     const [nextStatus, nextSnapshot] = await Promise.all([engine.status(), engine.snapshot()]);
-    setStatus(nextStatus);
-    if (nextSnapshot) setSnapshot(nextSnapshot);
+    acceptStatus(nextStatus);
+    if (nextSnapshot) acceptSnapshot(nextSnapshot);
     return nextStatus;
   }, []);
 
@@ -109,8 +133,8 @@ function Shell() {
     const id = window.setInterval(async () => {
       const [nextStatus, next] = await Promise.all([engine.status(), engine.snapshot()]);
       if (!live) return;
-      setStatus(nextStatus);
-      if (next) setSnapshot(next);
+      acceptStatus(nextStatus);
+      if (next) acceptSnapshot(next);
     }, SNAPSHOT_POLL_MS);
     return () => {
       live = false;
@@ -329,8 +353,8 @@ function Shell() {
           <div className="sp__empty">
             <h2 className="sp__empty-title">Waiting for the mixer</h2>
             <p className="sp__empty-note">
-              The audio thread starts with the window and reports what it opens. If nothing
-              appears, open settings and rescan the devices.
+              The audio thread starts with the window and reports what it opens.
+              A device you plug in later is picked up without a rescan.
             </p>
           </div>
         )}
@@ -339,10 +363,13 @@ function Shell() {
       <footer className="sp__foot">
         <span className="sp__foot-item">
           {isPreview ? "in-memory stand-in, no audio is touched" : "mixing in this process"}
+          {snapshot
+            ? `, ${(snapshot.sample_rate / 1000).toFixed(1)} kHz, ${Math.round(snapshot.latency)} ms buffer`
+            : ""}
         </span>
         <span className="sp__spacer" />
         {restarting ? (
-          <span className="sp__foot-item sp__foot-item--busy">reopening streams…</span>
+          <span className="sp__foot-item sp__foot-item--busy">reopening streams...</span>
         ) : null}
       </footer>
 

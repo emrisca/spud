@@ -47,6 +47,8 @@ export function DynamicsDialog({ strip, write, onClose }: Props) {
   const comp = strip?.comp_detail ?? null;
   const gateOn = (strip?.gate ?? 0) >= 0.5;
   const compOn = (strip?.comp ?? 0) >= 0.5;
+  const amount = strip?.denoiser ?? 0;
+  const denoiseOn = amount > 0;
 
   const onVoice =
     gate !== null &&
@@ -97,7 +99,9 @@ export function DynamicsDialog({ strip, write, onClose }: Props) {
       maxHeight="min(86vh, 720px)"
       footer={
         <div className="sp__footer-row">
-          <span className="eq-hint">{onVoice ? "voice chain" : gateOn || compOn ? "custom" : "off"}</span>
+          <span className="eq-hint">
+            {onVoice ? "voice chain" : gateOn || compOn || denoiseOn ? "custom" : "off"}
+          </span>
           <span style={{ flex: 1 }} />
           <PressDepth depth={3} tilt={5} onClick={onClose}>
             Done
@@ -123,6 +127,41 @@ export function DynamicsDialog({ strip, write, onClose }: Props) {
               step={0.5}
               format={trimDb}
               onChange={(value) => set("Trim", value)}
+            />
+          </div>
+
+          <button
+            type="button"
+            className="sp__row sp__row--switch"
+            role="switch"
+            aria-checked={denoiseOn}
+            onClick={() => set("Denoiser", denoiseOn ? 0 : 0.5)}
+          >
+            <span className="sp__row-body">
+              <span className="sp__row-name">Denoiser</span>
+              <span className="sp__row-note">
+                Pulls the room down under the voice. It learns the floor from the
+                quietest thing this input hears, so hiss and fan noise come down
+                while speech stays.
+              </span>
+            </span>
+            <span
+              className="sp__switch"
+              data-on={denoiseOn ? "true" : undefined}
+              aria-hidden="true"
+            />
+          </button>
+
+          <div className="dyn-grid dyn-grid--single" data-dim={denoiseOn ? undefined : "true"}>
+            <Slider
+              label="Amount"
+              note="how far the room is pulled down"
+              value={amount * 100}
+              min={0}
+              max={100}
+              step={1}
+              format={(value) => `${value.toFixed(0)} %`}
+              onChange={(value) => set("Denoiser", value / 100)}
             />
           </div>
 
@@ -294,8 +333,8 @@ export function DynamicsDialog({ strip, write, onClose }: Props) {
           <p className="sp__fineprint">
             Voice is where a microphone starts: a gate at −42 dB with a 220 ms
             hold, and a gentle 3:1 over −18 dB with a 6 dB knee. Both run after
-            the low cut, so rumble cannot hold the gate open. The input level is
-            yours to set and is not part of the preset.
+            the low cut, so rumble cannot hold the gate open. The input level and
+            the denoiser are yours to set, and neither is part of the preset.
           </p>
         </div>
       ) : null}

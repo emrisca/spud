@@ -160,12 +160,13 @@ export function formatDb(db: number): string {
   return `${rounded > 0 ? "+" : ""}${rounded.toFixed(1)}`;
 }
 
-/** True while either half of a strip's dynamics is switched in. */
-export const dynamicsOn = (strip: Strip) => strip.gate >= 0.5 || strip.comp >= 0.5;
+/** True while the strip's dynamics, its denoiser or both are switched in. */
+export const dynamicsOn = (strip: Strip) =>
+  strip.gate >= 0.5 || strip.comp >= 0.5 || strip.denoiser > 0.005;
 
-/** Which halves, for the chip that opens them. */
+/** Which parts, for the chip that opens them. */
 export const dynamicsLabel = (strip: Strip) =>
-  `gate ${strip.gate >= 0.5 ? "on" : "off"}, compressor ${strip.comp >= 0.5 ? "on" : "off"}`;
+  `gate ${strip.gate >= 0.5 ? "on" : "off"}, compressor ${strip.comp >= 0.5 ? "on" : "off"}, denoiser ${strip.denoiser > 0.005 ? "on" : "off"}`;
 
 /** Linear peak to dBFS, floored at the meter's bottom. */
 export function toDb(linear: number): number {

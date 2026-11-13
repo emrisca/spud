@@ -310,10 +310,11 @@ function DynamicsChips({
         >
           EQ
         </button>
-      ) : null}        <button
-          type="button"
-          className="chip"
-          data-on={dynamics ? "true" : undefined}
+      ) : null}
+      <button
+        type="button"
+        className="chip"
+        data-on={dynamics ? "true" : undefined}
         aria-pressed={dynamics}
         aria-label={`Input level, gate and compressor for ${stripTitle(strip)}`}
         title={`${stripTitle(strip)}: ${dynamicsLabel(strip)}, input ${formatDb(strip.trim)} dB`}
@@ -333,12 +334,8 @@ function DynamicsChips({
  * bass), and they only move audio while the EQ chip is lit.
  */
 function VirtualColumn({ strip }: { strip: Strip }) {
-  const { write, snapshot, apps, editDynamics } = useConsole();
+  const { write, apps, editDynamics } = useConsole();
   const playing = apps.find((entry) => entry.strip === strip.index)?.apps ?? [];
-  const rate = snapshot.sample_rate ? `${(snapshot.sample_rate / 1000).toFixed(1)} kHz` : "no rate";
-  // The window between the cable and the speakers, which is the number that
-  // matters when a video is a fraction of a second out of step with its sound.
-  const lag = snapshot.latency ? `${Math.round(snapshot.latency)} ms` : "no buffer";
 
   return (
     <article
@@ -346,12 +343,6 @@ function VirtualColumn({ strip }: { strip: Strip }) {
       data-strip={strip.index}
     >
       <StripHeader strip={strip} />
-      <span
-        className="strip__rate"
-        title={`Mixed at ${rate}; the console holds ${lag} of buffer, and the devices add their own periods on top`}
-      >
-        {rate}, {lag}
-      </span>
 
       <section className="strip__eq" aria-label={`${stripTitle(strip)} equaliser`}>
         <h3 className="strip__caption">
@@ -392,7 +383,7 @@ function VirtualColumn({ strip }: { strip: Strip }) {
         </div>
       </section>
 
-      <AppList apps={playing} />
+      <AppList apps={playing} assigned={Boolean(strip.device)} />
 
       <FaderBlock strip={strip} />
       <MiniRow strip={strip} />
@@ -413,19 +404,25 @@ function VirtualColumn({ strip }: { strip: Strip }) {
  * There is no bookkeeping to do: a row is drawn because the session exists, and
  * when the program quits its session ends and the row disappears on the next
  * poll. Nothing is remembered, so nothing can go stale.
+ *
+ * Every session is drawn. The list used to stop at five, which meant a sixth
+ * program was on the cable and had no control at all; the panel scrolls instead
+ * of hiding rows, and says so when the cable has nothing on it.
  */
-function AppList({ apps }: { apps: AppSession[] }) {
-  if (apps.length === 0) return null;
+function AppList({ apps, assigned }: { apps: AppSession[]; assigned: boolean }) {
+  if (!assigned) return null;
 
   return (
     <section className="strip__apps" aria-label="Applications on this input">
       <h3 className="strip__caption">
         Apps
-        <span className="strip__apps-count">{apps.length}</span>
+        {apps.length ? <span className="strip__apps-count">{apps.length}</span> : null}
       </h3>
-      {apps.slice(0, 5).map((app) => (
-        <AppRow key={`${app.pid}-${app.name}`} app={app} />
-      ))}
+      {apps.length === 0 ? (
+        <p className="strip__apps-empty">Nothing playing</p>
+      ) : (
+        apps.map((app) => <AppRow key={app.pid} app={app} />)
+      )}
     </section>
   );
 }
@@ -473,7 +470,8 @@ function AppRow({ app }: { app: AppSession }) {
         }}
         onChange={(event) => {
           const next = Number(event.target.value);
-          holding.current = true;
+          // A keyboard move is not a hold: only a pointer down to pointer up is,
+          // or the row would stop following Windows after one arrow key.
           setVolume(next);
           setApp(app.pid, { volume: next });
         }}
@@ -482,12 +480,29 @@ function AppRow({ app }: { app: AppSession }) {
   );
 }
 
-function BusColumn({ bus }: { bus: Bus }) {
-  const { write, pickDevice } = useConsole();
-  const toggle = (name: string, on: boolean) => write(name, on ? 0 : 1);
+/**
+ * The bus key and its name.
+ *
+ * The key stays visible because every routing chip on the console is named after
+ * it. The name sits under it, click to rename, the way a strip's label works.
+ */
+function BusHead({ bus }: { bus: Bus }) {
+  const { writeText } = useConsole();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(bus.label);
+
+  useEffect(() => {
+    if (!editing) setDraft(bus.label);
+  }, [bus.label, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const name = draft.trim().slice(0, 24);
+    if (name !== bus.label) writeText(busParam(bus.index, "Label"), name);
+  };
 
   return (
-    <article className={`bus${bus.mute ? " bus--muted" : ""}`} data-bus={bus.index}>
+    <div className="bus__head">
       <span
         className={`bus__key${bus.physical ? "" : " bus__key--virtual"}`}
         title={
@@ -498,6 +513,47 @@ function BusColumn({ bus }: { bus: Bus }) {
       >
         {bus.key}
       </span>
+      {editing ? (
+        <input
+          className="bus__name-input"
+          value={draft}
+          autoFocus
+          maxLength={24}
+          aria-label={`Rename bus ${bus.key}`}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={commit}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") commit();
+            if (event.key === "Escape") {
+              setDraft(bus.label);
+              setEditing(false);
+            }
+          }}
+        />
+      ) : (
+        <button
+          type="button"
+          className="bus__name"
+          title={bus.label ? `${bus.label}. Click to rename` : `Name bus ${bus.key}`}
+          onClick={() => {
+            setDraft(bus.label);
+            setEditing(true);
+          }}
+        >
+          {bus.label || "name"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function BusColumn({ bus }: { bus: Bus }) {
+  const { write, pickDevice } = useConsole();
+  const toggle = (name: string, on: boolean) => write(name, on ? 0 : 1);
+
+  return (
+    <article className={`bus${bus.mute ? " bus--muted" : ""}`} data-bus={bus.index}>
+      <BusHead bus={bus} />
       <div className="bus__body">
         <Meter kind="bus" index={bus.index} />
         <Fader

@@ -31,6 +31,10 @@ pub struct StripState {
     /// engine seeds no trim, so whatever is saved here is always the person's.
     #[serde(default)]
     pub trim: f32,
+    /// How much noise the suppressor takes out: 0 is off, 1 is the full depth.
+    /// Also not seeded, so it needs no guard of its own.
+    #[serde(default)]
+    pub denoiser: f32,
     pub mute: bool,
     pub solo: bool,
     pub mono: bool,
@@ -104,6 +108,7 @@ impl Saved {
                     StripState {
                         gain: strip.gain(),
                         trim: strip.trim(),
+                        denoiser: strip.denoiser(),
                         mute: strip.mute(),
                         solo: strip.solo(),
                         mono: strip.mono(),
@@ -151,6 +156,7 @@ impl Saved {
             let strip = &mix.strips[index];
             strip.set_gain(saved.gain);
             strip.set_trim(saved.trim);
+            strip.set_denoiser(saved.denoiser);
             strip.set_mute(saved.mute);
             strip.set_solo(saved.solo);
             strip.set_mono(saved.mono);
@@ -283,6 +289,7 @@ mod tests {
 
         mix.strips[2].set_gain(-7.5);
         mix.strips[2].set_trim(7.5);
+        mix.strips[2].set_denoiser(0.6);
         mix.strips[2].set_mute(true);
         mix.strips[2].set_mono(true);
         mix.strips[2].set_routed(0, true);
@@ -319,6 +326,7 @@ mod tests {
 
         assert_eq!(fresh.strips[2].gain(), -7.5);
         assert_eq!(fresh.strips[2].trim(), 7.5);
+        assert_eq!(fresh.strips[2].denoiser(), 0.6);
         assert!(fresh.strips[2].mute());
         assert!(fresh.strips[2].mono());
         assert!(fresh.strips[2].routed_to(0));

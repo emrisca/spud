@@ -18,7 +18,8 @@ import {
   type Tokens,
 } from "./palette";
 
-const STORAGE_KEY = "hitboxer.palette";
+/** Spud's own key. The console has never shared a window with another app. */
+const STORAGE_KEY = "spud.palette";
 
 function readStored(): Palette {
   try {
